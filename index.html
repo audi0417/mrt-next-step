@@ -59,7 +59,8 @@
     .unlock-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
 
     /* Decision logic */
-    .decision-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px}
+    .decision-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;flex:1;display:flex;flex-direction:column}
+    .decision-layers{display:flex;flex-direction:column;flex:1;justify-content:space-around}
     .decision-box-title{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px}
     .decision-layers{display:flex;flex-direction:column;gap:10px}
     .d-layer{display:flex;align-items:center;gap:10px}
@@ -354,7 +355,7 @@
     .success-reward-chip{font-size:13px;font-weight:800;color:#AA8800;background:linear-gradient(135deg,#FFFCF0,#FFF5D4);border:1px solid #F0DFA0;border-radius:10px;padding:9px 18px;display:inline-block}
 
     /* ── RIGHT PANEL ── */
-    .demo-right-panel{padding-top:20px;color:#fff}
+    .demo-right-panel{padding-top:20px;color:#fff;align-self:stretch;display:flex;flex-direction:column;gap:16px}
     .out-pills{display:flex;flex-direction:column;gap:8px}
     .out-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.8)}
 
@@ -433,9 +434,6 @@
     .ph-list li{font-size:13px;padding:4px 0;display:flex;gap:8px;opacity:.85;line-height:1.4}
     .ph-list li::before{content:'→';flex-shrink:0}
 
-    /* Footer */
-    footer{background:var(--blue-dark);color:rgba(255,255,255,.5);text-align:center;padding:40px 24px;font-size:13px;line-height:2}
-    footer strong{color:#fff}
 
     /* ── Responsive ── */
     @media(max-width:1100px){
@@ -750,7 +748,7 @@
 
       <!-- Output -->
       <div class="out-pills">
-        <div class="decision-box-title" style="margin-top:20px;margin-bottom:12px">唯一輸出</div>
+        <div class="decision-box-title" style="margin-bottom:12px">唯一輸出</div>
         <div class="out-pill" id="rp-out1">—</div>
         <div class="out-pill" id="rp-out2">—</div>
         <div class="out-pill" id="rp-out3">—</div>
@@ -837,12 +835,6 @@
 
 </div><!-- /tab-proposal -->
 
-<footer>
-  <img src="logo.png" alt="療心智能" style="height:36px;opacity:.7;filter:brightness(0) invert(1);margin-bottom:16px"><br>
-  <strong>MRT Next Step &nbsp;|&nbsp; 城市行為決策引擎</strong><br>
-  台北捷運 AI 應用提案 &nbsp;·&nbsp; 療心智能 HealthyMind.Tech &nbsp;·&nbsp; 2026<br>
-  <span style="font-size:11px">本展示頁面為概念提案，非台北捷運公司官方服務</span>
-</footer>
 
 <script>
 /* ── Tab switching ── */
