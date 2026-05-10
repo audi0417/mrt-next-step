@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRT Next Step | 城市行為決策引擎</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --blue:#005BAC;--blue-dark:#003F87;--blue-deep:#060F22;
+      --teal:#00A6A6;--green:#34C759;--red:#C0392B;
+      --dark:#1A2B45;--gray:#5A6A7E;--light:#F0F4F8;--border:#DDE3ED;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;color:var(--dark);background:#fff;overflow-x:hidden;padding-top:58px}
+
+    /* ──────── NAV ──────── */
+    nav{position:fixed;top:0;width:100%;background:rgba(0,63,135,.97);backdrop-filter:blur(14px);z-index:300;padding:0 48px;height:58px;display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none}
+    .nav-mark{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff}
+    .nav-name{font-size:16px;font-weight:800}
+    .nav-links{display:flex;gap:28px;list-style:none}
+    .nav-links a{color:rgba(255,255,255,.78);text-decoration:none;font-size:13px;transition:color .2s}
+    .nav-links a:hover{color:#fff}
+
+    /* ──────── NAV TABS ──────── */
+    .nav-tabs{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+    .ntab{background:rgba(255,255,255,.12);border:none;border-radius:8px;padding:7px 28px;font-size:14px;font-weight:700;color:rgba(255,255,255,.65);cursor:pointer;transition:background .2s,color .2s}
+    .ntab.active{background:rgba(255,255,255,.22);color:#fff}
+    .ntab:hover:not(.active){background:rgba(255,255,255,.16);color:#fff}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    /* ══════════════════════════════════
+       DEMO SECTION
+    ══════════════════════════════════ */
+    .demo-wrap{background:var(--blue-deep);height:calc(100vh - 58px);padding:32px 48px;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;justify-content:center;gap:48px;overflow:hidden}
+
+    /* ── LEFT PANEL ── */
+    .demo-left{padding-top:20px;color:#fff}
+    .demo-left-title{font-size:13px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+    .demo-left-h1{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:10px}
+    .demo-left-desc{font-size:13px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:28px}
+
+    /* Scenario cards */
+    .sc-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+    .sc-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .25s;display:flex;align-items:flex-start;gap:14px}
+    .sc-card:hover{background:rgba(255,255,255,.12)}
+    .sc-card.active{background:rgba(255,255,255,.16);border-color:var(--teal);box-shadow:0 0 24px rgba(0,166,166,.25)}
+    /* locked state removed — cards always clickable */
+    .sc-card-num{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:rgba(255,255,255,.8);flex-shrink:0;margin-top:1px}
+    .sc-card.active .sc-card-num{background:var(--teal);color:#fff}
+    .sc-card-name{font-size:14px;font-weight:800;margin-bottom:3px}
+    .sc-card-sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.4}
+
+    /* Unlock hint */
+    .unlock-hint{font-size:12px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px;margin-bottom:24px}
+    .unlock-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
+
+    /* Decision logic */
+    .decision-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px}
+    .decision-box-title{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px}
+    .decision-layers{display:flex;flex-direction:column;gap:10px}
+    .d-layer{display:flex;align-items:center;gap:10px}
+    .d-layer-bar{width:3px;height:32px;border-radius:2px;flex-shrink:0}
+    .d-layer:nth-child(1) .d-layer-bar{background:var(--teal)}
+    .d-layer:nth-child(2) .d-layer-bar{background:#5AC8FA}
+    .d-layer:nth-child(3) .d-layer-bar{background:#FFD60A}
+    .d-layer-name{font-size:12px;font-weight:700;color:rgba(255,255,255,.85)}
+    .d-layer-desc{font-size:11px;color:rgba(255,255,255,.45);line-height:1.3}
+
+    .reset-link{display:inline-block;margin-top:18px;font-size:12px;color:rgba(255,255,255,.38);cursor:pointer;text-decoration:underline;text-underline-offset:3px;transition:color .2s}
+    .reset-link:hover{color:rgba(255,255,255,.65)}
+
+    /* ── RIGHT: iPhone ── */
+    .demo-right{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:16px}
+
+    /* ── IPHONE FRAME (fully CSS, scales with viewport) ── */
+    .iphone-frame{
+      --iphone-h: calc(100vh - 58px - 80px);
+      --iphone-w: calc(var(--iphone-h) / 2.165);
+      --iphone-r: calc(var(--iphone-w) * 0.155);
+      --iphone-b: calc(var(--iphone-w) * 0.028);
+      height: var(--iphone-h);
+      width: var(--iphone-w);
+      background: linear-gradient(175deg,#1E1E1E 0%,#0A0A0A 100%);
+      border-radius: var(--iphone-r);
+      border: var(--iphone-b) solid #1a1a1a;
+      position: relative;
+      box-shadow:
+        0 0 0 1px #333,
+        0 0 0 2.5px #555,
+        inset 0 1px 1px rgba(255,255,255,.08),
+        0 60px 120px rgba(0,0,0,.8),
+        0 24px 60px rgba(0,0,0,.55),
+        0 8px 28px rgba(0,0,0,.4);
+      flex-shrink: 0;
+    }
+
+    /* Dynamic Island */
+    .dyn-island{
+      position:absolute;top:calc(var(--iphone-b) + 6px);left:50%;transform:translateX(-50%);
+      width:calc(var(--iphone-w) * 0.29);
+      height:calc(var(--iphone-w) * 0.07);
+      background:#000;border-radius:20px;z-index:100;
+      box-shadow:0 0 0 1px rgba(255,255,255,.05);
+    }
+
+    /* Inner bezel ring */
+    .iphone-inner-bezel{
+      position:absolute;inset:-1px;border-radius:var(--iphone-r);
+      border:2px solid rgba(255,255,255,.07);pointer-events:none;z-index:101;
+    }
+
+    /* Screen area */
+    .iphone-screen-wrap{
+      position:absolute;inset:0;
+      border-radius:calc(var(--iphone-r) - var(--iphone-b));
+      overflow:hidden;background:#000;
+    }
+
+    /* Side buttons */
+    .iphone-btn-mute,.iphone-btn-vup,.iphone-btn-vdn,.iphone-btn-pwr{
+      position:absolute;z-index:102;
+      background:linear-gradient(90deg,#1A1A1A,#2C2C2C);
+    }
+    .iphone-btn-mute{
+      left:calc(var(--iphone-b) * -1);top:15%;
+      width:var(--iphone-b);height:4%;border-radius:3px 0 0 3px;
+    }
+    .iphone-btn-vup{
+      left:calc(var(--iphone-b) * -1);top:23%;
+      width:var(--iphone-b);height:7%;border-radius:3px 0 0 3px;
+    }
+    .iphone-btn-vdn{
+      left:calc(var(--iphone-b) * -1);top:32%;
+      width:var(--iphone-b);height:7%;border-radius:3px 0 0 3px;
+    }
+    .iphone-btn-pwr{
+      right:calc(var(--iphone-b) * -1);top:27%;
+      width:var(--iphone-b);height:11%;border-radius:0 3px 3px 0;
+      background:linear-gradient(270deg,#1A1A1A,#2C2C2C);
+    }
+
+    /* ── iOS STATUS BAR ── */
+    .ios-sb{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 20px 8px;
+      position:relative;flex-shrink:0;
+    }
+    .ios-sb.dark{color:#fff}
+    .ios-sb.light{background:var(--blue);color:#fff}
+    .sb-time{font-size:15px;font-weight:700;letter-spacing:-.3px;line-height:1}
+    .sb-right{display:flex;align-items:center;gap:5px}
+
+    /* Signal bars */
+    .sb-signal{display:flex;align-items:flex-end;gap:1.5px;height:12px}
+    .sb-signal i{display:block;width:3px;border-radius:1px;background:currentColor}
+    .sb-signal i:nth-child(1){height:3px}
+    .sb-signal i:nth-child(2){height:6px}
+    .sb-signal i:nth-child(3){height:9px}
+    .sb-signal i:nth-child(4){height:12px}
+
+    /* WiFi SVG */
+    .sb-wifi{width:16px;height:12px;display:block}
+
+    /* Battery */
+    .sb-batt{
+      width:25px;height:12px;
+      border:1.5px solid currentColor;border-radius:3.5px;
+      padding:1.5px;position:relative;opacity:.9;
+    }
+    .sb-batt-fill{width:76%;height:100%;background:currentColor;border-radius:1.5px}
+    .sb-batt::after{
+      content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);
+      width:3px;height:6px;background:currentColor;border-radius:0 2px 2px 0;opacity:.55;
+    }
+
+    /* ── HOME SCREEN ── */
+    .home-screen{
+      position:absolute;inset:0;
+      background:linear-gradient(160deg,#0A1830 0%,#003A7A 40%,#004F80 65%,#005858 100%);
+      display:flex;flex-direction:column;
+      transition:opacity .35s ease,transform .35s ease;
+    }
+    .home-screen.exit{opacity:0;transform:scale(.96);pointer-events:none}
+
+    /* Notification banner */
+    .notif{
+      position:absolute;top:-130px;left:10px;right:10px;z-index:90;
+      background:rgba(232,237,248,.93);backdrop-filter:blur(24px);
+      border-radius:18px;padding:12px 14px;cursor:pointer;
+      transition:top .5s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 4px 24px rgba(0,0,0,.25);
+    }
+    .notif.show{top:44px}
+    .notif-row{display:flex;gap:10px;align-items:flex-start}
+    .notif-ic{
+      width:40px;height:40px;border-radius:10px;background:var(--blue);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px;text-align:center;line-height:1.2
+    }
+    .notif-info{flex:1;min-width:0}
+    .notif-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+    .notif-app{font-size:11px;font-weight:700;color:#666}
+    .notif-ago{font-size:10px;color:#999}
+    .notif-title{font-size:13px;font-weight:700;color:#111;margin-bottom:2px}
+    .notif-msg{font-size:12px;color:#555;line-height:1.3}
+
+    /* Home clock */
+    .home-clock{text-align:center;color:#fff;padding:6px 0 14px;flex-shrink:0}
+    .home-clock-time{font-size:70px;font-weight:200;letter-spacing:-2px;line-height:1}
+    .home-clock-date{font-size:15px;font-weight:400;opacity:.85;margin-top:4px}
+
+    /* App icon grid */
+    .app-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px;padding:6px 16px;align-content:start;overflow:hidden}
+    .app-ic{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
+    .app-ic-img{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff}
+    .app-ic-lbl{font-size:9px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center}
+    .app-ic.mrt .app-ic-img{box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 20px rgba(0,166,166,.5)}
+
+    /* Dock */
+    .app-dock{margin:6px 14px 18px;background:rgba(255,255,255,.14);backdrop-filter:blur(14px);border-radius:22px;padding:11px 0;display:flex;justify-content:space-around}
+
+    /* ── APP SCREEN ── */
+    .app-screen{
+      position:absolute;inset:0;background:#F0F4F8;
+      display:flex;flex-direction:column;
+      transform:translateY(100%);
+      transition:transform .45s cubic-bezier(.4,0,.2,1);
+    }
+    .app-screen.enter{transform:translateY(0)}
+
+    /* App header */
+    .app-hdr{background:var(--blue);padding:4px 18px 14px;color:#fff;flex-shrink:0}
+    .app-hdr-back{font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;margin-bottom:6px;display:inline-flex;align-items:center;gap:3px}
+    .app-hdr-eye{font-size:10px;color:rgba(255,255,255,.6);margin-bottom:2px}
+    .app-hdr-station{font-size:20px;font-weight:900}
+    .app-hdr-sub{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px}
+
+    /* Body */
+    .app-body{flex:1;padding:12px;overflow-y:auto}
+    .q-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+    .q-card{background:#fff;border-radius:14px;padding:11px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .q-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+    .q-val{font-size:18px;font-weight:900;color:var(--blue);line-height:1}
+    .q-unit{font-size:10px;color:var(--gray);font-weight:400}
+
+    /* AI card */
+    .ai-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.09);animation:ain .4s ease}
+    @keyframes ain{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .ai-hdr{background:linear-gradient(130deg,var(--blue),var(--teal));padding:11px 14px;color:#fff;display:flex;align-items:center;gap:8px}
+    .ai-badge{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900}
+    .ai-hdr-lbl{font-size:10px;font-weight:800;letter-spacing:.8px}
+    .ai-body{padding:13px}
+    .ai-ctx{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--gray);background:var(--light);padding:5px 10px;border-radius:8px;margin-bottom:9px;font-weight:600}
+    .ai-ctx-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0}
+    .ai-action{font-size:14px;font-weight:900;color:var(--dark);margin-bottom:6px;line-height:1.35}
+    .ai-reason{font-size:11px;color:var(--gray);line-height:1.55;margin-bottom:11px}
+    .ai-reward{display:flex;align-items:center;gap:9px;background:linear-gradient(135deg,#FFFCF0,#FFF5D4);border:1px solid #F0DFA0;border-radius:11px;padding:9px 12px;margin-bottom:12px}
+    .ai-star{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#F0C030,#D09010);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:900;flex-shrink:0}
+    .ai-reward-lbl{font-size:10px;color:#AA8800;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px}
+    .ai-reward-val{font-size:13px;font-weight:900;color:#886600}
+    .ai-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .ai-ok{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;transition:background .2s}
+    .ai-ok:hover{background:var(--blue-dark)}
+    .ai-skip{background:var(--light);color:var(--gray);border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer}
+
+    /* ── App screen real status bar ── */
+    .app-ios-sb{
+      display:flex;justify-content:space-between;align-items:center;
+      background:#fff;padding:12px 18px 8px;flex-shrink:0;position:relative;z-index:10;
+    }
+    .app-sb-time{font-size:15px;font-weight:600;color:#1C1C1E;letter-spacing:-.3px}
+    .app-sb-right{display:flex;align-items:center;gap:6px}
+    .app-sb-batt-pct{font-size:12px;font-weight:500;color:#1C1C1E;letter-spacing:-.2px}
+
+    /* ── MRT Screenshot Area ── */
+    .mrt-img-wrap{flex:1;overflow:hidden;position:relative;background:#fff}
+    .mrt-img-wrap img{width:100%;display:block;position:absolute;left:0;top:-44px;pointer-events:none}
+    .mrt-img-wrap::after{content:'';position:absolute;bottom:0;left:0;right:0;height:62px;background:#fff;z-index:5}
+
+    /* ── AI Bottom Sheet ── */
+    .ai-sheet{
+      position:absolute;left:0;right:0;bottom:0;
+      background:#fff;border-radius:20px 20px 0 0;
+      box-shadow:0 -8px 40px rgba(0,0,0,.22);
+      z-index:50;
+      transform:translateY(100%);
+      transition:transform .48s cubic-bezier(.4,0,.2,1);
+    }
+    .ai-sheet.open{transform:translateY(0)}
+    .sheet-handle{width:36px;height:4px;background:#DDE3ED;border-radius:2px;margin:10px auto 0}
+    .sheet-top{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 0}
+    .sheet-badge{font-size:10px;font-weight:800;border-radius:6px;padding:3px 9px;color:#fff}
+    .sheet-badge.earn{background:linear-gradient(135deg,var(--teal),var(--green))}
+    .sheet-badge.spend{background:linear-gradient(135deg,#E07020,#C05010)}
+    .sheet-dismiss{font-size:11px;color:var(--gray);cursor:pointer;padding:4px 8px;border-radius:6px;background:var(--light)}
+    .sheet-body{padding:10px 14px 14px}
+
+    /* ── Real Tab Bar (matches MRT Go screenshot) ── */
+    .real-tabbar{background:#fff;border-top:.5px solid #E5E5EA;display:flex;padding:5px 0 18px;flex-shrink:0;position:relative;z-index:55}
+    .rt{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:#8E8E93;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .rt.active{color:var(--blue)}
+    .rt-ic{width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+
+    /* Type badges on scenario cards */
+    .sc-type{font-size:10px;font-weight:800;border-radius:5px;padding:2px 8px;display:inline-block;margin-bottom:5px}
+    .sc-type.earn{background:rgba(0,166,166,.2);color:var(--teal)}
+    .sc-type.spend{background:rgba(224,112,32,.2);color:#E07020}
+
+    /* Step 1 */
+    .step1-action{font-size:15px;font-weight:900;color:var(--dark);line-height:1.35;margin:6px 0 14px}
+    .ai-detail-btn{font-weight:700;color:var(--blue) !important}
+
+    /* Step 2 */
+    .sheet-detail{animation:slideInRight .28s ease}
+    @keyframes slideInRight{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+    .step2-back{font-size:12px;color:var(--blue);font-weight:700;cursor:pointer;margin-bottom:10px;display:inline-flex;align-items:center;gap:3px}
+
+    .ai-insight{font-size:10px;font-weight:700;color:var(--teal);background:rgba(0,166,166,.1);border-radius:6px;padding:4px 10px;margin-bottom:7px;display:inline-block}
+    .ai-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+    .ai-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--light);color:var(--gray)}
+    .ai-alts{margin-bottom:11px;display:none}
+    .ai-alts.show{display:block}
+    .ai-alts-lbl{font-size:10px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .ai-alts-row{display:flex;flex-direction:column;gap:5px}
+    .ai-alt-item{display:flex;align-items:center;justify-content:space-between;background:var(--light);border-radius:9px;padding:7px 10px}
+    .ai-alt-mode{font-size:11px;font-weight:800;color:var(--dark)}
+    .ai-alt-meta{font-size:10px;color:var(--gray);text-align:right}
+
+    /* ── Sheet overlay ── */
+    .sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);z-index:49;opacity:0;pointer-events:none;transition:opacity .4s ease}
+    .sheet-overlay.show{opacity:1;pointer-events:auto}
+
+    /* ── Persona cards ── */
+    .persona-section{margin-bottom:18px}
+    .persona-section-lbl{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:8px}
+    .persona-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .persona-card{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:11px 6px 10px;cursor:pointer;transition:all .25s;text-align:center}
+    .persona-card:hover{background:rgba(255,255,255,.12)}
+    .persona-card.active{background:rgba(0,166,166,.18);border-color:var(--teal);box-shadow:0 0 18px rgba(0,166,166,.22)}
+    .persona-avatar{font-size:22px;margin-bottom:4px;line-height:1}
+    .persona-name{font-size:12px;font-weight:800;color:#fff;margin-bottom:2px}
+    .persona-sub{font-size:10px;color:rgba(255,255,255,.48);line-height:1.3}
+
+    /* ── Success state ── */
+    .success-wrap{padding:16px 14px 22px;text-align:center}
+    .success-icon-ring{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin:0 auto 12px;animation:popIn .45s cubic-bezier(.175,.885,.32,1.275)}
+    @keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+    .success-title{font-size:17px;font-weight:900;color:var(--dark);margin-bottom:5px}
+    .success-sub{font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.55}
+    .success-reward-chip{font-size:13px;font-weight:800;color:#AA8800;background:linear-gradient(135deg,#FFFCF0,#FFF5D4);border:1px solid #F0DFA0;border-radius:10px;padding:9px 18px;display:inline-block}
+
+    /* ── RIGHT PANEL ── */
+    .demo-right-panel{padding-top:20px;color:#fff}
+    .out-pills{display:flex;flex-direction:column;gap:8px}
+    .out-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.8)}
+
+    /* Persona indicator */
+    .rp-persona{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 14px;margin-bottom:16px;transition:all .3s}
+    .rp-persona-avatar{font-size:26px;flex-shrink:0;line-height:1}
+    .rp-persona-name{font-size:14px;font-weight:800;color:#fff}
+    .rp-persona-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+
+    /* Signal rows */
+    .rp-signal{display:flex;align-items:flex-start;gap:10px;animation:fadein .3s ease}
+    @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .rp-signal-bar{width:3px;min-height:32px;border-radius:2px;flex-shrink:0;margin-top:2px}
+    .rp-signal-name{font-size:12px;font-weight:700;color:rgba(255,255,255,.88)}
+    .rp-signal-val{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;line-height:1.3}
+
+    /* ── Demo hint ── */
+    .demo-hint{text-align:center;color:rgba(255,255,255,.4);font-size:12px;animation:blink 2.5s ease-in-out infinite;margin-top:12px}
+    @keyframes blink{0%,100%{opacity:.4}50%{opacity:.85}}
+
+    /* ══════════════════════════════════
+       PROPOSAL TAB
+    ══════════════════════════════════ */
+    .sec{padding:96px 64px}
+    .sec-lbl{font-size:11px;font-weight:800;color:var(--teal);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+    .sec-title{font-size:42px;font-weight:900;line-height:1.15;margin-bottom:14px}
+    .sec-desc{font-size:17px;color:var(--gray);line-height:1.75;max-width:580px;margin-bottom:60px}
+    .center{text-align:center}
+    .center .sec-desc{margin:0 auto 60px}
+
+    /* Problem */
+    .bg-light{background:var(--light)}
+    .three-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto}
+    .prob-card{background:#fff;border-radius:20px;padding:36px 28px;box-shadow:0 4px 22px rgba(0,0,0,.06);border-top:4px solid var(--red);transition:transform .25s}
+    .prob-card:hover{transform:translateY(-4px)}
+    .prob-num{width:44px;height:44px;background:#FEE8EC;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--red);margin-bottom:18px}
+    .prob-card h3{font-size:17px;font-weight:800;margin-bottom:10px}
+    .prob-card p{font-size:14px;color:var(--gray);line-height:1.65}
+
+    /* Solution */
+    .sol-card{background:linear-gradient(140deg,var(--blue),var(--blue-dark));border-radius:20px;padding:36px 28px;color:#fff;transition:transform .25s}
+    .sol-card:hover{transform:translateY(-4px)}
+    .sol-num{font-size:48px;font-weight:900;color:rgba(255,255,255,.1);line-height:1;margin-bottom:4px}
+    .sol-card h3{font-size:18px;font-weight:800;margin-bottom:10px}
+    .sol-card p{font-size:14px;color:rgba(255,255,255,.76);line-height:1.65}
+    .out-box{max-width:800px;margin:56px auto 0;background:linear-gradient(140deg,var(--blue-dark),var(--teal));border-radius:24px;padding:48px;color:#fff;text-align:center}
+    .out-box h3{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:28px}
+    .out-row{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+    .out-item{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .out-ic{width:56px;height:56px;background:rgba(255,255,255,.16);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff}
+    .out-lbl{font-size:13px;font-weight:700;color:rgba(255,255,255,.85)}
+
+    /* Before / After */
+    .cmp-table{max-width:980px;margin:0 auto;border-radius:22px;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,.09)}
+    .cmp-head{display:grid;grid-template-columns:170px 1fr 1fr;background:var(--blue);color:#fff}
+    .cmp-head div{padding:18px 22px;font-weight:800;font-size:13px}
+    .cmp-head .h-dim{background:var(--blue-dark)}
+    .cmp-head .h-after{background:var(--teal)}
+    .cmp-row{display:grid;grid-template-columns:170px 1fr 1fr;background:#fff;border-bottom:1px solid #E8EDF5}
+    .cmp-row:nth-child(even){background:#F8FAFD}
+    .cmp-row div{padding:15px 22px;font-size:13px;line-height:1.55}
+    .r-dim{font-weight:800;color:var(--dark);background:rgba(0,91,172,.04);font-size:12px}
+    .r-before{color:#AAA}
+    .r-after{color:var(--teal);font-weight:700}
+
+    /* Phases */
+    .ph-card{border-radius:20px;padding:36px 28px;transition:transform .25s}
+    .ph-card:hover{transform:translateY(-4px)}
+    .ph-card:nth-child(1){background:var(--light);border:2px solid rgba(0,91,172,.15)}
+    .ph-card:nth-child(2){background:linear-gradient(140deg,var(--blue),var(--teal));color:#fff}
+    .ph-card:nth-child(3){background:var(--blue-dark);color:#fff}
+    .ph-num{font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;opacity:.6;margin-bottom:6px}
+    .ph-title{font-size:21px;font-weight:900;margin-bottom:5px}
+    .ph-tag{font-size:12px;opacity:.7;margin-bottom:18px;font-style:italic}
+    .ph-list{list-style:none}
+    .ph-list li{font-size:13px;padding:4px 0;display:flex;gap:8px;opacity:.85;line-height:1.4}
+    .ph-list li::before{content:'→';flex-shrink:0}
+
+    /* Footer */
+    footer{background:var(--blue-dark);color:rgba(255,255,255,.5);text-align:center;padding:40px 24px;font-size:13px;line-height:2}
+    footer strong{color:#fff}
+
+    /* ── Responsive ── */
+    @media(max-width:1100px){
+      .demo-wrap{grid-template-columns:1fr;padding:40px 32px;gap:32px}
+      .demo-right{display:flex;flex-direction:column;align-items:center}
+      .three-grid{grid-template-columns:1fr}
+      .sec{padding:64px 32px}
+    }
+    @media(max-width:640px){
+      nav{padding:0 20px}
+      .nav-links{display:none}
+      .ptab{padding:14px 32px}
+      .cmp-head,.cmp-row{grid-template-columns:100px 1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-mark">M</div>
+    <span class="nav-name">MRT Next Step</span>
+  </a>
+  <div class="nav-tabs">
+    <button class="ntab active" onclick="switchTab('demo')">互動展示</button>
+    <button class="ntab" onclick="switchTab('proposal')">方案說明</button>
+  </div>
+  <div style="width:160px"></div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     DEMO TAB
+════════════════════════════════════════ -->
+<div id="tab-demo" class="tab-content active">
+  <div class="demo-wrap">
+
+    <!-- LEFT: Scenario panel -->
+    <div class="demo-left">
+      <div class="demo-left-title">選擇情境</div>
+      <h1 class="demo-left-h1">點選情境<br>觀察 AI 如何決策</h1>
+      <p class="demo-left-desc">點選任一情境，手機畫面即時切換，看 AI Agent 如何根據當下條件給出唯一建議。</p>
+
+      <!-- Persona selector -->
+      <div class="persona-section">
+        <div class="persona-section-lbl">選擇用戶角色</div>
+        <div class="persona-row">
+          <div class="persona-card active" onclick="setPersona('worker')" data-persona="worker">
+            <div class="persona-avatar">👔</div>
+            <div class="persona-name">上班族</div>
+            <div class="persona-sub">平日固定<br>通勤路線</div>
+          </div>
+          <div class="persona-card" onclick="setPersona('student')" data-persona="student">
+            <div class="persona-avatar">🎒</div>
+            <div class="persona-name">學生族</div>
+            <div class="persona-sub">彈性時段<br>轉乘頻繁</div>
+          </div>
+          <div class="persona-card" onclick="setPersona('tourist')" data-persona="tourist">
+            <div class="persona-avatar">🗺</div>
+            <div class="persona-name">觀光客</div>
+            <div class="persona-sub">週末探索<br>商圈消費</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-cards" id="sc-cards">
+        <!-- Dynamically rendered by renderScenarioCards() -->
+      </div>
+
+      <span class="reset-link" id="reset-link" onclick="resetDemo()">重新體驗完整展示流程</span>
+    </div>
+
+    <!-- CENTER: iPhone -->
+    <div class="demo-right">
+      <!-- iPhone 15 frame -->
+      <div class="iphone-frame">
+
+        <!-- Dynamic Island -->
+        <div class="dyn-island"></div>
+
+        <!-- Inner bezel ring -->
+        <div class="iphone-inner-bezel"></div>
+
+        <!-- Screen -->
+        <div class="iphone-screen-wrap">
+
+          <!-- ── HOME SCREEN ── -->
+          <div id="home-screen" class="home-screen">
+
+            <!-- Status bar -->
+            <div class="ios-sb dark">
+              <span class="sb-time" id="home-time">9:30</span>
+              <div class="sb-right">
+                <div class="sb-signal"><i></i><i></i><i></i><i></i></div>
+                <svg class="sb-wifi" viewBox="0 0 15 12" fill="currentColor" stroke="none">
+                  <circle cx="7.5" cy="11" r="1.3"/>
+                  <path d="M5 9 Q7.5 5 10 9" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                  <path d="M2.5 6.5 Q7.5 0.5 12.5 6.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                  <path d="M0.5 4 Q7.5 -3 14.5 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                </svg>
+                <div class="sb-batt"><div class="sb-batt-fill"></div></div>
+              </div>
+            </div>
+
+            <!-- Notification -->
+            <div class="notif" id="notif" onclick="openApp()">
+              <div class="notif-row">
+                <div class="notif-ic">台北<br>捷運</div>
+                <div class="notif-info">
+                  <div class="notif-meta">
+                    <span class="notif-app">台北捷運</span>
+                    <span class="notif-ago">剛才</span>
+                  </div>
+                  <div class="notif-title" id="notif-title">你剛抵達忠孝復興站</div>
+                  <div class="notif-msg" id="notif-msg">AI 已分析當下情境，點擊查看行動建議</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clock -->
+            <div class="home-clock">
+              <div class="home-clock-time">9:30</div>
+              <div class="home-clock-date">週日，5月10日</div>
+            </div>
+
+            <!-- App grid -->
+            <div class="app-grid">
+              <div class="app-ic"><div class="app-ic-img" style="background:#34C759">電話</div><div class="app-ic-lbl">電話</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#30B0C7">訊息</div><div class="app-ic-lbl">訊息</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#1C1C1E;font-size:11px">鏡頭</div><div class="app-ic-lbl">相機</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#8E8E93">設定</div><div class="app-ic-lbl">設定</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#5AC8FA">地圖</div><div class="app-ic-lbl">地圖</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#FF3B30">日曆</div><div class="app-ic-lbl">行事曆</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#5856D6">健康</div><div class="app-ic-lbl">健康</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#FF9500">播客</div><div class="app-ic-lbl">播客</div></div>
+              <div class="app-ic mrt"><div class="app-ic-img" style="background:var(--blue);font-size:11px;letter-spacing:-.3px">台北捷運</div><div class="app-ic-lbl">台北捷運</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#FFCC00;color:#333">購物</div><div class="app-ic-lbl">購物</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#0076FF;font-size:11px">瀏覽</div><div class="app-ic-lbl">瀏覽器</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#FF2D55">音樂</div><div class="app-ic-lbl">音樂</div></div>
+            </div>
+
+            <!-- Dock -->
+            <div class="app-dock">
+              <div class="app-ic"><div class="app-ic-img" style="background:#34C759;width:50px;height:50px;border-radius:12px">電話</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#30B0C7;width:50px;height:50px;border-radius:12px">訊息</div></div>
+              <div class="app-ic mrt"><div class="app-ic-img" style="background:var(--blue);width:50px;height:50px;border-radius:12px;font-size:11px;letter-spacing:-.3px">台北捷運</div></div>
+              <div class="app-ic"><div class="app-ic-img" style="background:#1C1C1E;width:50px;height:50px;border-radius:12px;font-size:11px">鏡頭</div></div>
+            </div>
+
+          </div><!-- /home-screen -->
+
+          <!-- ── APP SCREEN ── -->
+          <div id="app-screen" class="app-screen">
+
+            <!-- Overlay covers full app screen when sheet opens -->
+            <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+
+            <!-- Status bar (white, matches real MRT Go App header) -->
+            <div class="app-ios-sb">
+              <span class="app-sb-time" id="app-time">9:41</span>
+              <div class="app-sb-right">
+                <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+                  <rect x="0" y="3" width="3" height="9" rx="1" fill="#1C1C1E"/>
+                  <rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1C1C1E"/>
+                  <rect x="9" y="1" width="3" height="11" rx="1" fill="#1C1C1E"/>
+                  <rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1C1C1E"/>
+                </svg>
+                <svg width="15" height="12" viewBox="0 0 15 12" fill="#1C1C1E" stroke="none">
+                  <circle cx="7.5" cy="11" r="1.3"/>
+                  <path d="M5 9 Q7.5 5 10 9" stroke="#1C1C1E" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                  <path d="M2.5 6.5 Q7.5 0.5 12.5 6.5" stroke="#1C1C1E" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                  <path d="M0.5 4 Q7.5 -3 14.5 4" stroke="#1C1C1E" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                </svg>
+                <span class="app-sb-batt-pct">89%</span>
+                <svg width="25" height="13" viewBox="0 0 25 13" fill="none">
+                  <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="#1C1C1E" stroke-opacity="0.35"/>
+                  <rect x="1.5" y="1.5" width="18" height="10" rx="2.5" fill="#34C759"/>
+                  <path d="M23.5 4.5V8.5C24.3 8.2 25 7.4 25 6.5C25 5.6 24.3 4.8 23.5 4.5Z" fill="#1C1C1E" opacity="0.4"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- MRT Go screenshot as main view -->
+            <div class="mrt-img-wrap">
+              <img src="mrt-go.png" alt="台北捷運 Go" id="mrt-img">
+
+              <!-- AI Bottom Sheet (slides up over the screenshot) -->
+              <div class="ai-sheet" id="ai-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-top">
+                  <span class="sheet-badge earn" id="sheet-badge">賺取點數</span>
+                  <span class="sheet-dismiss" onclick="closeSheet()">收起 ×</span>
+                </div>
+                <!-- STEP 1: Compact card (default) -->
+                <div class="sheet-body" id="step1">
+                  <div class="ai-ctx"><div class="ai-ctx-dot"></div><span id="ai-ctx">通勤分流 · 加碼賺取點數</span></div>
+                  <div class="step1-action" id="ai-action">提前古亭站下車，轉乘 YouBike 2.0 至公司</div>
+                  <div class="ai-reward" style="margin-bottom:12px">
+                    <div class="ai-star" id="ai-star">★</div>
+                    <div>
+                      <div class="ai-reward-lbl" id="ai-reward-lbl">分流任務完成賺取</div>
+                      <div class="ai-reward-val" id="ai-reward">賺取 50 捷運點</div>
+                    </div>
+                  </div>
+                  <div class="ai-btns">
+                    <button class="ai-ok" id="ai-ok" onclick="acceptTask()">開啟導航</button>
+                    <button class="ai-skip ai-detail-btn" onclick="showDetail()">了解原因 ›</button>
+                  </div>
+                </div>
+
+                <!-- STEP 2: Detail (slides in after "了解原因") -->
+                <div class="sheet-body sheet-detail" id="step2" style="display:none">
+                  <div class="step2-back" onclick="hideDetail()">‹ 返回</div>
+                  <div class="ai-insight" id="ai-insight">AI 分析你 120 天通勤紀錄</div>
+                  <div class="ai-chips" id="ai-chips"></div>
+                  <div class="ai-reason" id="ai-reason">你每個工作日從新店站通勤至忠孝敦化站。AI 偵測到今日大安站人流是平日 1.8 倍。</div>
+                  <div class="ai-alts" id="ai-alts">
+                    <div class="ai-alts-lbl">替代交通選項</div>
+                    <div class="ai-alts-row" id="ai-alts-row"></div>
+                  </div>
+                  <div class="ai-btns">
+                    <button class="ai-ok" id="ai-ok-2" onclick="acceptTask()">開啟導航</button>
+                    <button class="ai-skip" onclick="closeSheet()">略過</button>
+                  </div>
+                </div>
+
+                <!-- STEP 3: Success -->
+                <div class="success-wrap" id="sheet-success" style="display:none">
+                  <div class="success-icon-ring" id="success-icon-ring">✓</div>
+                  <div class="success-title" id="success-title">任務開始！</div>
+                  <div class="success-sub" id="success-sub">導航已啟動，完成任務後點數自動發放</div>
+                  <div class="success-reward-chip" id="success-reward-chip">完成後獲得 50 捷運點</div>
+                </div>
+              </div><!-- /ai-sheet -->
+            </div><!-- /mrt-img-wrap -->
+
+            <!-- Tab bar matching MRT Go App -->
+            <div class="real-tabbar">
+              <div class="rt">
+                <div class="rt-ic">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <rect x="6" y="5" width="12" height="14" rx="3"/><line x1="9" y1="19" x2="7" y2="21"/><line x1="15" y1="19" x2="17" y2="21"/><line x1="9" y1="10" x2="15" y2="10"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/>
+                  </svg>
+                </div>捷運路線
+              </div>
+              <div class="rt">
+                <div class="rt-ic">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <path d="M3 5h13M3 12h13M3 19h13"/><circle cx="19" cy="5" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="19" r="2" fill="currentColor" stroke="none"/>
+                  </svg>
+                </div>Go 優惠
+              </div>
+              <div class="rt active">
+                <div class="rt-ic">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="none">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                  </svg>
+                </div>首頁
+              </div>
+              <div class="rt">
+                <div class="rt-ic">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" stroke="none">
+                    <rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>
+                  </svg>
+                </div>更多功能
+              </div>
+              <div class="rt">
+                <div class="rt-ic">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                  </svg>
+                </div>我的捷運
+              </div>
+            </div><!-- /real-tabbar -->
+
+          </div><!-- /app-screen -->
+
+        </div><!-- /screen -->
+
+        <!-- Side buttons (CSS-positioned) -->
+        <div class="iphone-btn-mute"></div>
+        <div class="iphone-btn-vup"></div>
+        <div class="iphone-btn-vdn"></div>
+        <div class="iphone-btn-pwr"></div>
+
+      </div><!-- /iPhone frame -->
+
+      <div class="demo-hint" id="demo-hint">等待通知...</div>
+
+    </div><!-- /demo-right (center) -->
+
+    <!-- RIGHT: AI logic explanation (dynamic) -->
+    <div class="demo-right-panel">
+      <div class="demo-left-title">AI 決策分析</div>
+
+      <!-- Persona chip -->
+      <div class="rp-persona" id="rp-persona">
+        <div class="rp-persona-avatar" id="rp-avatar">👔</div>
+        <div>
+          <div class="rp-persona-name" id="rp-name">上班族</div>
+          <div class="rp-persona-sub" id="rp-sub">平日固定通勤路線</div>
+        </div>
+      </div>
+
+      <!-- Data signals -->
+      <div class="decision-box">
+        <div class="decision-box-title">AI 分析依據</div>
+        <div class="decision-layers" id="rp-signals"></div>
+      </div>
+
+      <!-- Output -->
+      <div class="out-pills">
+        <div class="decision-box-title" style="margin-top:20px;margin-bottom:12px">唯一輸出</div>
+        <div class="out-pill" id="rp-out1">—</div>
+        <div class="out-pill" id="rp-out2">—</div>
+        <div class="out-pill" id="rp-out3">—</div>
+      </div>
+    </div>
+
+  </div><!-- /demo-wrap -->
+</div><!-- /tab-demo -->
+
+<!-- ════════════════════════════════════════
+     PROPOSAL TAB
+════════════════════════════════════════ -->
+<div id="tab-proposal" class="tab-content">
+
+  <!-- Problem -->
+  <section class="sec bg-light">
+    <div class="center">
+      <div class="sec-lbl">問題現況</div>
+      <h2 class="sec-title">現有點數模式的三大缺口</h2>
+      <p class="sec-desc">台北捷運 Go App 目前提供路線查詢、即時到站與點數累積，但核心邏輯仍停留在消費後回饋，難以主動影響乘客在出站瞬間的決策。</p>
+    </div>
+    <div class="three-grid">
+      <div class="prob-card"><div class="prob-num">01</div><h3>事後才回饋，無法即時引導</h3><p>點數在消費完成後才發放，本質是獎勵已發生的行為。乘客離站後沒有明確的「現在該做什麼」指引。</p></div>
+      <div class="prob-card"><div class="prob-num">02</div><h3>靜態地圖，缺乏情境感知</h3><p>Go! Map 的累點與銷點地圖是靜態查詢，不考慮天氣、尖離峰、當日活動與個人偏好，吸引力有限。</p></div>
+      <div class="prob-card"><div class="prob-num">03</div><h3>難以量測對運量的實際影響</h3><p>現有指標以點數發放量與兌換量為主，無法連結到離峰分流、站內停留或商圈導流等可量測結果。</p></div>
+    </div>
+  </section>
+
+  <!-- Solution -->
+  <section class="sec">
+    <div class="center">
+      <div class="sec-lbl">解決方案</div>
+      <h2 class="sec-title">統一 AI Agent × 城市行為決策引擎</h2>
+      <p class="sec-desc">每位乘客背後對應一個個人化 AI Agent，持續學習通勤節律，在出站瞬間給出唯一最佳建議，而非讓用戶自己選擇。</p>
+    </div>
+    <div class="three-grid">
+      <div class="sol-card"><div class="sol-num">01</div><h3>移動行為層</h3><p>捷運進出站紀錄、YouBike 轉乘軌跡、慣用路線，判斷乘客現在在哪、剛完成什麼移動。</p></div>
+      <div class="sol-card"><div class="sol-num">02</div><h3>商業行為層</h3><p>站內商店、便利商店、地下街、合作品牌的即時狀態，形成現在可執行的行動集合。</p></div>
+      <div class="sol-card"><div class="sol-num">03</div><h3>情境行為層</h3><p>天氣、時間、尖離峰壓力、活動檔期與人流密度，判斷某行動在當下是否合適且具吸引力。</p></div>
+    </div>
+    <div class="out-box">
+      <h3>AI Agent 輸出永遠只有三件事</h3>
+      <div class="out-row">
+        <div class="out-item"><div class="out-ic">1</div><div class="out-lbl">唯一行動建議</div></div>
+        <div class="out-item"><div class="out-ic">2</div><div class="out-lbl">即時點數誘因</div></div>
+        <div class="out-item"><div class="out-ic">3</div><div class="out-lbl">情境理由說明</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Before / After -->
+  <section class="sec bg-light">
+    <div class="center">
+      <div class="sec-lbl">Before / After 比較</div>
+      <h2 class="sec-title">從點數工具到行為決策平台</h2>
+      <p class="sec-desc">這不是在現有 App 上加功能，而是從根本改變點數的角色定位與介入時機。</p>
+    </div>
+    <div class="cmp-table">
+      <div class="cmp-head">
+        <div class="h-dim">面向</div><div>現在（Before）</div><div class="h-after">提案（After）</div>
+      </div>
+      <div class="cmp-row"><div class="r-dim">核心邏輯</div><div class="r-before">消費後累點，被動等待兌換</div><div class="r-after">出站瞬間 AI 判斷最適行動，點數促成行為</div></div>
+      <div class="cmp-row"><div class="r-dim">點數角色</div><div class="r-before">事後回饋工具</div><div class="r-after">即時行為誘因與城市調度槓桿</div></div>
+      <div class="cmp-row"><div class="r-dim">使用體驗</div><div class="r-before">慢慢累積，偶爾兌換，與通勤脫節</div><div class="r-after">每次出站都有即時建議，與情境直接連動</div></div>
+      <div class="cmp-row"><div class="r-dim">商家合作</div><div class="r-before">單店促銷，跨店整合弱</div><div class="r-after">跨商家任務，精準導流，成效抽成</div></div>
+      <div class="cmp-row"><div class="r-dim">效果衡量</div><div class="r-before">點數發放量、兌換量</div><div class="r-after">任務接受率、到店轉換率、離峰分流量</div></div>
+      <div class="cmp-row"><div class="r-dim">商業模式</div><div class="r-before">送點、換券、活動抽獎</div><div class="r-after">導流費、平台費、成效抽成、資料洞察</div></div>
+    </div>
+  </section>
+
+  <!-- Phases -->
+  <section class="sec">
+    <div class="center">
+      <div class="sec-lbl">三階段推進</div>
+      <h2 class="sec-title">從試點驗證到城市平台</h2>
+      <p class="sec-desc">採漸進式架構，先以最小成本驗證任務驅動行為的效果，再擴展為跨商家平台，最終升級為城市級行為調度引擎。</p>
+    </div>
+    <div class="three-grid">
+      <div class="ph-card"><div class="ph-num">Phase 1</div><div class="ph-title">點數任務化</div><div class="ph-tag">基礎驗證期，規則引擎</div><ul class="ph-list"><li>靜態點數升級為任務式機制</li><li>試點站導入早餐、離峰、雨天任務</li><li>簡易分群推薦，驗證行為改變</li><li>KPI：任務接受率、站內消費轉換率</li></ul></div>
+      <div class="ph-card"><div class="ph-num">Phase 2</div><div class="ph-title">跨商家聯盟</div><div class="ph-tag">成長期，AI 個人化</div><ul class="ph-list"><li>建立共同點數池，導入更多合作商家</li><li>AI Agent 依個人偏好做個人化建議</li><li>跨站點跨場域情境組合任務</li><li>KPI：跨商家兌換率、導流到店率</li></ul></div>
+      <div class="ph-card"><div class="ph-num">Phase 3</div><div class="ph-title">城市決策引擎</div><div class="ph-tag">平台化期，強化學習</div><ul class="ph-list"><li>動態調整任務強度，平衡尖離峰人流</li><li>支援市府政策導流、觀光、活動管理</li><li>開放給局處與品牌作為操作介面</li><li>KPI：非票價收入成長、分流效果</li></ul></div>
+    </div>
+  </section>
+
+</div><!-- /tab-proposal -->
+
+<footer>
+  <strong>MRT Next Step &nbsp;|&nbsp; 城市行為決策引擎</strong><br>
+  台北捷運 AI 應用提案 &nbsp;·&nbsp; 2026<br>
+  <span style="font-size:11px">本展示頁面為概念提案，非台北捷運公司官方服務</span>
+</footer>
+
+<script>
+/* ── Tab switching ── */
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.ntab')[id === 'demo' ? 0 : 1].classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  if (id === 'demo') setTimeout(startDemo, 300);
+}
+
+/* ── Scenario data (9 scenarios × 3 personas) ── */
+const SCENARIOS = {
+
+  /* ── 上班族 ── */
+  worker_commute: {
+    persona:'worker', type:'earn',
+    cardName:'通勤改道分流', cardSub:'週一 08:15 · 大安站快到了<br>人流 1.8 倍，改道省 8 分鐘還賺點',
+    ctx:'通勤分流 · 加碼賺取點數', insight:'AI 分析你 120 天通勤紀錄',
+    chips:['人流 1.8× ⚠','尖峰時段','週一 08:15'],
+    action:'提前古亭站下車，轉乘 YouBike 2.0 至公司',
+    reason:'你每個工作日從新店站通勤至忠孝敦化站。AI 偵測到今日大安站人流是平日 1.8 倍、月台已達警戒。走古亭 → YouBike 路線預估比繼續等車快 8 分鐘。',
+    alternatives:[{mode:'YouBike 2.0',time:'12 分',avail:'站旁 7 輛'},{mode:'公車 0 南',time:'18 分',avail:'3 分後到站'}],
+    rewardLbl:'分流任務完成賺取', reward:'賺取 50 捷運點', btnText:'開啟導航',
+    notifTitle:'你快到大安站了', notifMsg:'今日人流 1.8 倍，AI 建議提前改道節省 8 分鐘',
+    successTitle:'任務開始！', successSub:'導航已啟動，抵達目的地後點數自動發放', successReward:'完成後獲得 50 捷運點'
+  },
+  worker_breakfast: {
+    persona:'worker', type:'spend',
+    cardName:'站內早餐兌換', cardSub:'週一 07:45 · 忠孝敦化站<br>比平常早到 8 分，換杯咖啡剛剛好',
+    ctx:'到站早餐 · 點數折抵', insight:'AI 分析你 90 天早餐購買紀錄',
+    chips:['07:45 提早到站','全家在 B1','多出 8 分鐘'],
+    action:'在 B1 全家換美式咖啡＋三明治早餐',
+    reason:'你過去 90 天有 73 次在週一至週五 07:30–08:30 在捷運站附近吃早餐的紀錄。今天你比平常早 8 分鐘到站，站內全家剛好有你常點的美式咖啡套餐，用點數折抵比定價省 55 元。',
+    alternatives:null,
+    rewardLbl:'花費點數享折扣', reward:'花費 15 點  折抵 55 元', btnText:'立即兌換',
+    notifTitle:'你到忠孝敦化站了，還有 8 分鐘', notifMsg:'用 15 點換早餐，B1 全家就在出口旁',
+    successTitle:'兌換成功！', successSub:'出示 QR Code 給全家店員掃描即可取餐', successReward:'已折抵 55 元，好好享用早餐'
+  },
+  worker_umbrella: {
+    persona:'worker', type:'spend',
+    cardName:'下雨共享雨傘', cardSub:'週三早上 · 出站後降雨 92%<br>沒帶傘？租傘押金 10 點，還傘退回',
+    ctx:'下雨出站 · 共享雨傘折抵', insight:'AI 偵測未帶傘 × 出站後降雨 92%',
+    chips:['降雨 92%','氣溫 18°C','沒帶傘'],
+    action:'租 Raingo 共享傘，3 號出口取傘',
+    reason:'感應到你今天出門時未攜帶雨傘，而出站後降雨機率高達 92%。Raingo 雨傘站就在 3 號出口旁，押金僅 10 點，還傘後點數自動退回，全程無需現金，不用多繞路。',
+    alternatives:null,
+    rewardLbl:'押金租借，還傘全退', reward:'押金 10 點  還傘後退回', btnText:'掃碼租傘',
+    notifTitle:'出站後會下雨，你沒帶傘', notifMsg:'用 10 點押金租 Raingo 共享雨傘，還傘退點',
+    successTitle:'已預約雨傘！', successSub:'前往 3 號出口掃描 QR Code 取傘', successReward:'還傘後 10 點自動退回'
+  },
+
+  /* ── 學生族 ── */
+  student_bike: {
+    persona:'student', type:'earn',
+    cardName:'YouBike 轉乘回家', cardSub:'週四 17:30 · 公館站<br>站旁 9 輛、晴天，騎車快 7 分還賺點',
+    ctx:'轉乘 YouBike · 加碼賺點', insight:'AI 分析你 60 天 YouBike 使用習慣',
+    chips:['站旁 9 輛','晴天 26°C','週四下午'],
+    action:'在公館站租 YouBike 2.0，12 分鐘騎回宿舍',
+    reason:'你過去 60 天有 28 次從公館捷運站騎 YouBike 回宿舍的紀錄。今天天氣晴朗，站旁有 9 輛可租，騎車比等公車快 7 分鐘，現在轉乘還獲得雙倍點數獎勵。',
+    alternatives:[{mode:'YouBike 2.0',time:'12 分',avail:'站旁 9 輛'},{mode:'公車 236',time:'19 分',avail:'6 分後到站'}],
+    rewardLbl:'轉乘任務完成賺取', reward:'賺取 30 捷運點', btnText:'掃碼租車',
+    notifTitle:'站旁有 9 輛 YouBike！', notifMsg:'騎回宿舍比公車快 7 分，還賺雙倍點數',
+    successTitle:'出發騎車！', successSub:'掃描 YouBike 車把 QR Code 即可解鎖', successReward:'完成後獲得 30 捷運點'
+  },
+  student_late: {
+    persona:'student', type:'spend',
+    cardName:'晚間站內宵夜', cardSub:'週四 21:30 · 宵夜時段<br>7-11 站內兌換宵夜，省 49 元',
+    ctx:'晚間返家 · 超商折扣', insight:'AI 分析你 45 天晚間消費行為',
+    chips:['21:30 夜間','宵夜時段','7-11 在站內'],
+    action:'站內 7-11 換關東煮＋御飯糰宵夜',
+    reason:'你過去 45 天有 31 次在 21:00 後出站前在站內便利商店消費的紀錄。現在是晚上 9 點半，站內 7-11 有你常買的關東煮組合，用點折抵比定價省 49 元，不用出站淋雨找宵夜。',
+    alternatives:null,
+    rewardLbl:'花費點數享折扣', reward:'花費 25 點  折抵 49 元', btnText:'立即兌換',
+    notifTitle:'晚了，肚子餓吧？', notifMsg:'用 25 點換宵夜，7-11 就在站內不用出去',
+    successTitle:'兌換成功！', successSub:'出示 QR Code 給店員掃描，取宵夜去', successReward:'已折抵 49 元，好好吃一頓'
+  },
+  student_offpeak: {
+    persona:'student', type:'earn',
+    cardName:'離峰時段搭車', cardSub:'週二 10:30 · 非尖峰時段<br>2 倍點數，月度挑戰倒數 2 次達成',
+    ctx:'離峰搭車 · 加碼賺點', insight:'AI 偵測你的非尖峰搭乘紀錄',
+    chips:['離峰時段','月台空曠','月度挑戰 8/10'],
+    action:'搭離峰時段，完成月度挑戰倒數 2 次',
+    reason:'你目前在非尖峰時段（10:00–16:00）搭乘捷運。台北捷運離峰乘車加碼活動，你這個月已累積 8 次離峰搭乘，再 2 次即可解鎖「離峰達人」月度徽章，額外獲得 100 點獎勵。',
+    alternatives:null,
+    rewardLbl:'離峰加碼賺取', reward:'本次賺取 2× 捷運點', btnText:'加入活動',
+    notifTitle:'現在搭車賺雙倍！', notifMsg:'離峰時段加碼，月度挑戰再 2 次就達成',
+    successTitle:'已加入活動！', successSub:'本次搭乘完成後自動計算雙倍點數', successReward:'月度進度 8/10，再加油 !'
+  },
+
+  /* ── 觀光客 ── */
+  tourist_attraction: {
+    persona:'tourist', type:'earn',
+    cardName:'周邊景點打卡', cardSub:'週末晴天 · 忠孝復興站<br>初次到訪，附近 3 景點打卡解鎖優惠',
+    ctx:'景點探索 · 打卡賺點', insight:'AI 偵測你首次到訪此站',
+    chips:['初次到訪','週末晴天','附近 3 景點'],
+    action:'步行 5 分鐘到大安森林公園打卡',
+    reason:'根據你的進站紀錄，這是你首次來忠孝復興站。附近 500 公尺內有大安森林公園、永康街商圈與 SOGO 百貨。完成景點打卡任務可累積「台北探索者」徽章，並解鎖永康街合作店家優惠。',
+    alternatives:[{mode:'大安森林公園',time:'步行 5 分',avail:'打卡賺 40 點'},{mode:'永康街商圈',time:'步行 8 分',avail:'打卡賺 30 點'}],
+    rewardLbl:'景點打卡任務賺取', reward:'賺取 40 捷運點', btnText:'開始探索',
+    notifTitle:'初次到忠孝復興！', notifMsg:'附近 3 個景點，打卡賺點解鎖在地優惠',
+    successTitle:'探索開始！', successSub:'前往大安森林公園打卡，完成後點數自動發放', successReward:'完成後獲得 40 捷運點'
+  },
+  tourist_food: {
+    persona:'tourist', type:'spend',
+    cardName:'美食優先候位', cardSub:'週六午餐 · 永康街<br>30 點換鼎泰豐優先候位，少等 25 分',
+    ctx:'美食推薦 · 合作商家優惠', insight:'AI 分析周邊合作餐廳即時優惠',
+    chips:['週六午餐','等候 40–60 分','限時優惠'],
+    action:'換鼎泰豐永康店優先候位，少等 25 分',
+    reason:'現在是午餐時段，鼎泰豐永康店通常需要等候 40–60 分鐘。持有捷運點數可兌換「優先候位券」，減少等待約 25 分鐘，同時享有菜單 9 折優惠，限今日 12:00–14:00 有效。',
+    alternatives:null,
+    rewardLbl:'花費點數享優惠', reward:'花費 30 點  省候位 25 分', btnText:'立即兌換',
+    notifTitle:'午餐時間！鼎泰豐等候 50 分鐘', notifMsg:'30 點換優先候位券，少等 25 分鐘還享 9 折',
+    successTitle:'優先候位成功！', successSub:'出示 QR Code 給店員，預計 15 分鐘內入座', successReward:'已省去 25 分等待，享用美食'
+  },
+  tourist_rain: {
+    persona:'tourist', type:'spend',
+    cardName:'雨天站內消費', cardSub:'週日 09:30 · 忠孝復興站<br>下雨避雨，換杯熱拿鐵暖暖身',
+    ctx:'雨天消費 · 點數折抵', insight:'AI 偵測降雨 × 你在站內',
+    chips:['下雨 23°C','週日上午','站內避雨'],
+    action:'站內全家換熱拿鐵，等雨勢轉小',
+    reason:'外面雨勢持續，預計到下午 1 點。忠孝復興站地下街有超過 30 間店，AI 建議先在站內全家享用早餐等雨勢轉小，比淋雨趕路舒適，用點數折抵還省 39 元。',
+    alternatives:null,
+    rewardLbl:'花費點數享折扣', reward:'花費 20 點  折抵 39 元', btnText:'立即兌換',
+    notifTitle:'外面下雨，在站內暖個身', notifMsg:'用 20 點兌換熱拿鐵，全家就在出口旁',
+    successTitle:'兌換成功！', successSub:'出示 QR Code 給全家店員掃描即可取餐', successReward:'已折抵 39 元，享用美食吧'
+  }
+};
+
+/* signals: [[name, detail, color], ...], output: [out1, out2, out3] added inline below */
+
+const PERSONA_META = {
+  worker:  { avatar:'👔', name:'上班族', sub:'平日固定通勤路線' },
+  student: { avatar:'🎒', name:'學生族', sub:'彈性時段、轉乘頻繁' },
+  tourist: { avatar:'🗺', name:'觀光客', sub:'週末探索、商圈消費' }
+};
+
+/* Inject signals + output into each scenario */
+Object.assign(SCENARIOS.worker_commute,  {
+  signals:[['120天通勤軌跡','新店→忠孝敦化，固定起訖站','#00A6A6'],['大安站即時人流','感應器：平日 1.8 倍，月台警戒','#5AC8FA'],['歷史改道效益','古亭換乘 YouBike 過去快 6–9 分','#FFD60A']],
+  output:['提前古亭站換乘','賺取 50 捷運點','人流 1.8×，月台警戒']
+});
+Object.assign(SCENARIOS.worker_breakfast, {
+  signals:[['90天早餐紀錄','週一~五 07:30–08:30 購買率 81%','#00A6A6'],['提早到站偵測','今日比平均早 8 分抵達','#5AC8FA'],['B1 全家庫存','美式咖啡＋三明治套餐有貨','#FFD60A']],
+  output:['B1 全家換早餐套餐','折抵 55 元','提早到、有 8 分空檔']
+});
+Object.assign(SCENARIOS.worker_umbrella, {
+  signals:[['天氣預報 API','出站後降雨機率 92%','#00A6A6'],['未攜帶傘偵測','進站時感應器未偵測到傘具','#5AC8FA'],['Raingo 站點庫存','3 號出口：共享傘 6 把可借','#FFD60A']],
+  output:['3 號出口租 Raingo 共享傘','押金 10 點，還傘退回','降雨 92%、無傘在身']
+});
+Object.assign(SCENARIOS.student_bike,   {
+  signals:[['60天 YouBike 習慣','公館→宿舍，騎乘率 47%','#00A6A6'],['站旁車輛即時','公館站旁現有 9 輛可借','#5AC8FA'],['天氣適騎判斷','晴天 26°C，無降雨風險','#FFD60A']],
+  output:['租 YouBike 2.0 騎回宿舍','賺取 30 捷運點','站旁 9 輛、晴天 26°C']
+});
+Object.assign(SCENARIOS.student_late,   {
+  signals:[['45天宵夜消費','21:00 後出站前站內消費率 69%','#00A6A6'],['夜間時段偵測','21:30，宵夜高峰區間','#5AC8FA'],['7-11 站內庫存','關東煮＋御飯糰組合有貨','#FFD60A']],
+  output:['站內 7-11 換關東煮宵夜','折抵 49 元','21:30 宵夜習慣符合']
+});
+Object.assign(SCENARIOS.student_offpeak,{
+  signals:[['月度搭乘紀錄','離峰搭乘已累積 8 次','#00A6A6'],['即時車廂人流','現在月台乘載率 31%','#5AC8FA'],['挑戰進度追蹤','再 2 次解鎖月度徽章＋100點','#FFD60A']],
+  output:['搭離峰時段完成挑戰','本次賺 2× 捷運點','月度挑戰倒數 2 次']
+});
+Object.assign(SCENARIOS.tourist_attraction,{
+  signals:[['首訪站點偵測','進站紀錄：忠孝復興首次到訪','#00A6A6'],['周邊景點資料庫','500m 內 3 個可打卡景點','#5AC8FA'],['天氣適遊判斷','週末晴天，戶外活動適合','#FFD60A']],
+  output:['大安森林公園打卡','賺取 40 捷運點','首訪＋晴天＋景點近']
+});
+Object.assign(SCENARIOS.tourist_food,   {
+  signals:[['午餐時段偵測','12:15，午餐黃金區間','#00A6A6'],['餐廳即時等候','鼎泰豐永康：現在等候 50 分','#5AC8FA'],['合約優惠查詢','優先候位券今日 12–14 時有效','#FFD60A']],
+  output:['換鼎泰豐優先候位券','折抵候位 25 分＋9 折','午餐時段等候 50 分']
+});
+Object.assign(SCENARIOS.tourist_rain,   {
+  signals:[['天氣預報 API','現在降雨，預計持續至下午','#00A6A6'],['站內停留偵測','你已在站內超過 5 分鐘','#5AC8FA'],['全家庫存查詢','熱拿鐵早餐組合有貨','#FFD60A']],
+  output:['站內全家換熱拿鐵','折抵 39 元','下雨＋站內有貨']
+});
+
+const PERSONA_SCENARIOS = {
+  worker:  ['worker_commute',  'worker_breakfast',     'worker_umbrella'],
+  student: ['student_bike',    'student_late',          'student_offpeak'],
+  tourist: ['tourist_attraction','tourist_food',        'tourist_rain']
+};
+
+let demoStarted = false;
+let appOpen = false;
+let activeKey = 'worker_commute';
+
+function startDemo() {
+  if (demoStarted) return;
+  demoStarted = true;
+  document.getElementById('demo-hint').textContent = '等待通知...';
+  setTimeout(() => {
+    document.getElementById('notif').classList.add('show');
+    document.getElementById('demo-hint').textContent = '點擊通知進入 App';
+  }, 1600);
+}
+
+function openSheet() {
+  document.getElementById('ai-sheet').classList.add('open');
+  document.getElementById('sheet-overlay').classList.add('show');
+}
+
+function closeSheet() {
+  document.getElementById('ai-sheet').classList.remove('open');
+  document.getElementById('sheet-overlay').classList.remove('show');
+  setTimeout(resetSheetSteps, 480);
+}
+
+function resetSheetSteps() {
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('sheet-success').style.display = 'none';
+  ['ai-ok','ai-ok-2'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.disabled = false; b.style.background = ''; }
+  });
+}
+
+function showDetail() {
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+}
+
+function hideDetail() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = 'block';
+}
+
+function openApp() {
+  if (appOpen) return;
+  appOpen = true;
+  document.getElementById('home-screen').classList.add('exit');
+  document.getElementById('app-screen').classList.add('enter');
+  document.getElementById('notif').classList.remove('show');
+  document.getElementById('demo-hint').style.display = 'none';
+  document.getElementById('reset-link').style.display = 'inline';
+  // Auto-show the AI sheet after the app slides in
+  setTimeout(openSheet, 700);
+}
+
+function goHome() {
+  appOpen = false;
+  document.getElementById('app-screen').classList.remove('enter');
+  document.getElementById('home-screen').classList.remove('exit');
+  document.getElementById('demo-hint').style.display = 'block';
+  document.getElementById('demo-hint').textContent = '點擊通知進入 App';
+  // Re-show notification
+  setTimeout(() => document.getElementById('notif').classList.add('show'), 400);
+}
+
+function resetDemo() {
+  appOpen = false; demoStarted = false;
+  document.getElementById('app-screen').classList.remove('enter');
+  document.getElementById('home-screen').classList.remove('exit');
+  document.getElementById('notif').classList.remove('show');
+  document.getElementById('ai-sheet').classList.remove('open');
+  document.getElementById('sheet-overlay').classList.remove('show');
+  resetSheetSteps();
+  const hint = document.getElementById('demo-hint');
+  hint.style.display = 'block'; hint.textContent = '等待通知...';
+  document.querySelectorAll('.persona-card').forEach(c => c.classList.toggle('active', c.dataset.persona === 'worker'));
+  renderScenarioCards('worker');
+  applyScenario('worker_commute', true);
+  setTimeout(startDemo, 600);
+}
+
+function setScenario(key, el, silent) {
+  activeKey = key;
+  if (!silent) {
+    document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+  // Auto-open app when a scenario is picked
+  if (!appOpen) {
+    openApp(); // openApp will auto-call openSheet after 700ms
+    setTimeout(() => applyScenario(key, silent), 250);
+    return;
+  }
+  applyScenario(key, silent);
+  // Re-open the sheet if it was dismissed
+  if (!silent) openSheet();
+}
+
+function applyScenario(key, silent) {
+  const s = SCENARIOS[key];
+  const sheet = document.getElementById('ai-sheet');
+  if (!silent) {
+    sheet.style.transition = 'none';
+    sheet.style.opacity = '0';
+    setTimeout(() => { sheet.style.transition = ''; sheet.style.opacity = '1'; }, 220);
+  }
+  // Update right panel
+  const pm = PERSONA_META[s.persona];
+  document.getElementById('rp-avatar').textContent = pm.avatar;
+  document.getElementById('rp-name').textContent   = pm.name;
+  document.getElementById('rp-sub').textContent    = pm.sub;
+  document.getElementById('rp-signals').innerHTML  = s.signals.map(([name,val,color]) =>
+    `<div class="rp-signal" style="margin-bottom:10px">
+      <div class="rp-signal-bar" style="background:${color}"></div>
+      <div><div class="rp-signal-name">${name}</div><div class="rp-signal-val">${val}</div></div>
+    </div>`
+  ).join('');
+  ['rp-out1','rp-out2','rp-out3'].forEach((id,i) => {
+    document.getElementById(id).textContent = s.output[i];
+  });
+
+  // Update notification for this persona (visible on home screen after reset)
+  const notifTitle = document.getElementById('notif-title');
+  const notifMsg = document.getElementById('notif-msg');
+  if (notifTitle) notifTitle.textContent = s.notifTitle;
+  if (notifMsg) notifMsg.textContent = s.notifMsg;
+  document.getElementById('ai-ctx').textContent = s.ctx;
+  // Insight
+  document.getElementById('ai-insight').textContent = s.insight;
+  // Chips
+  const chipsEl = document.getElementById('ai-chips');
+  chipsEl.innerHTML = s.chips.map(c => `<span class="ai-chip">${c}</span>`).join('');
+  document.getElementById('ai-action').textContent = s.action;
+  document.getElementById('ai-reason').textContent = s.reason;
+  // Alternatives
+  const altsEl = document.getElementById('ai-alts');
+  const altsRow = document.getElementById('ai-alts-row');
+  if (s.alternatives) {
+    altsRow.innerHTML = s.alternatives.map(a =>
+      `<div class="ai-alt-item"><span class="ai-alt-mode">${a.mode}</span><span class="ai-alt-meta">${a.time} · ${a.avail}</span></div>`
+    ).join('');
+    altsEl.classList.add('show');
+  } else {
+    altsEl.classList.remove('show');
+  }
+  document.getElementById('ai-reward-lbl').textContent = s.rewardLbl;
+  document.getElementById('ai-reward').textContent = s.reward;
+  // Badge type (earn = teal, spend = orange)
+  const badge = document.getElementById('sheet-badge');
+  badge.className = 'sheet-badge ' + s.type;
+  badge.textContent = s.type === 'earn' ? '賺取點數' : '花費點數';
+  // Star icon color
+  const star = document.getElementById('ai-star');
+  star.style.background = s.type === 'earn'
+    ? 'linear-gradient(135deg,#F0C030,#D09010)'
+    : 'linear-gradient(135deg,var(--teal),#007A7A)';
+  star.textContent = s.type === 'earn' ? '★' : '◈';
+  // Buttons (step 1 + step 2)
+  ['ai-ok','ai-ok-2'].forEach(id => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.textContent = s.btnText;
+    b.style.background = s.type === 'spend' ? 'var(--teal)' : '';
+    b.disabled = false;
+  });
+  resetSheetSteps();
+}
+
+function acceptTask() {
+  const s = SCENARIOS[activeKey];
+  ['ai-ok','ai-ok-2'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = true;
+  });
+  // Hide whichever step is visible, show success
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'none';
+  const successEl = document.getElementById('sheet-success');
+  const iconRing = document.getElementById('success-icon-ring');
+  document.getElementById('success-title').textContent = s.successTitle;
+  document.getElementById('success-sub').textContent = s.successSub;
+  document.getElementById('success-reward-chip').textContent = s.successReward;
+  iconRing.textContent = s.type === 'earn' ? '→' : '✓';
+  iconRing.style.background = s.type === 'earn'
+    ? 'linear-gradient(135deg,var(--teal),var(--green))'
+    : 'linear-gradient(135deg,var(--teal),#007A7A)';
+  successEl.style.display = 'none';
+  successEl.offsetHeight;
+  successEl.style.display = 'block';
+  setTimeout(closeSheet, 2800);
+}
+
+/* ── Persona switching ── */
+function renderScenarioCards(personaKey) {
+  const keys = PERSONA_SCENARIOS[personaKey];
+  document.getElementById('sc-cards').innerHTML = keys.map((key, i) => {
+    const s = SCENARIOS[key];
+    return `<div class="sc-card${i===0?' active':''}" onclick="setScenario('${key}',this)" data-key="${key}">
+      <div class="sc-card-num">0${i+1}</div>
+      <div>
+        <span class="sc-type ${s.type}">${s.type==='earn'?'賺取點數':'花費點數'}</span>
+        <div class="sc-card-name">${s.cardName}</div>
+        <div class="sc-card-sub">${s.cardSub}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setPersona(key) {
+  document.querySelectorAll('.persona-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.persona === key);
+  });
+  renderScenarioCards(key);
+  const firstKey = PERSONA_SCENARIOS[key][0];
+  const firstCard = document.querySelector(`.sc-card[data-key="${firstKey}"]`);
+  setScenario(firstKey, firstCard);
+}
+
+/* ── Auto-start ── */
+window.addEventListener('load', () => {
+  renderScenarioCards('worker');
+  applyScenario('worker_commute', true);
+  startDemo();
+});
+
+/* ── Live clock ── */
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0');
+  const t = h + ':' + m;
+  const home = document.getElementById('home-time');
+  if (home) home.textContent = t;
+  const app = document.getElementById('app-time');
+  if (app) app.textContent = t;
+}
+updateClock();
+setInterval(updateClock, 10000);
+</script>
+</body>
+</html>
