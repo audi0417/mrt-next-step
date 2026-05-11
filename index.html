@@ -1895,14 +1895,17 @@ setInterval(updateClock, 10000);
           <button onclick="wrMapZoom(0.8)" style="width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.9);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;font-weight:700;line-height:1">−</button>
           <button onclick="wrMapReset()" style="height:28px;padding:0 8px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.9);font-size:10px;cursor:pointer;color:#555;font-weight:700">重置</button>
         </div>
-        <div id="wr-map-outer" style="width:100%;height:520px;overflow:hidden;background:#EFEFEF;cursor:grab;user-select:none;position:relative">
-          <div id="wr-map-inner" style="position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0">
-            <img src="taipei-v1.3-clean.svg"
-                 id="wr-map-svg-img"
-                 style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block"
-                 draggable="false" alt="Taipei MRT">
-            <!-- Station donut pins — injected by JS (positioned as % of inner container) -->
-            <div id="wr-station-pins" style="position:absolute;inset:0"></div>
+        <div id="wr-map-outer" style="width:100%;overflow:hidden;background:#EFEFEF;cursor:grab;user-select:none;position:relative">
+          <!-- padding-bottom keeps the exact SVG aspect ratio (3500/6100=57.38%) so no letterboxing -->
+          <div style="padding-bottom:57.38%;position:relative">
+            <div id="wr-map-inner" style="position:absolute;inset:0;transform-origin:0 0">
+              <img src="taipei-v1.3-clean.svg"
+                   id="wr-map-svg-img"
+                   style="width:100%;height:100%;display:block"
+                   draggable="false" alt="Taipei MRT">
+              <!-- Station donut pins — positioned as % of inner container, matching SVG viewBox coords -->
+              <div id="wr-station-pins" style="position:absolute;inset:0"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -2253,30 +2256,6 @@ function wrInitMapPanZoom(){
   outer.addEventListener('touchend',()=>{ _wrDrag=false; });
 }
 
-/* Calculate the rendered bounds of the SVG inside the object-fit:contain img */
-function _wrImgBounds(){
-  const outer = document.getElementById('wr-map-outer');
-  if(!outer) return null;
-  const W = outer.clientWidth, H = outer.clientHeight;
-  const ar = 6100/3500; // SVG viewBox aspect ratio
-  let rW, rH, oX, oY;
-  if(W/H > ar){ rH=H; rW=H*ar; oX=(W-rW)/2; oY=0; }
-  else { rW=W; rH=W/ar; oX=0; oY=(H-rH)/2; }
-  return {oX, oY, rW, rH};
-}
-function _wrPlacePins(){
-  const container = document.getElementById('wr-station-pins');
-  if(!container) return;
-  const b = _wrImgBounds();
-  if(!b) return;
-  container.innerHTML = WR_WEEKLY_PINS.map(st =>
-    `<div class="wr-station-pin" id="wr-pin-${st.id}" onclick="wrSelectStation('${st.id}')"
-       style="position:absolute;left:${b.oX + st.x/100*b.rW}px;top:${b.oY + st.y/100*b.rH}px;transform:translate(-50%,-50%);cursor:pointer;text-align:center;user-select:none">
-      ${wrDonutSVG(st.segs, 44)}
-      <div style="font-size:7.5px;color:#111;font-weight:900;margin-top:1px;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 4px;border-radius:3px;letter-spacing:.2px">${st.name}</div>
-    </div>`
-  ).join('');
-}
 function wrBuildWeeklyMap() {
   // legend
   const legend = document.getElementById('wr-seg-legend');
@@ -2292,11 +2271,14 @@ function wrBuildWeeklyMap() {
   const container = document.getElementById('wr-station-pins');
   if (!container || container.dataset.built) return;
   container.dataset.built = '1';
-  _wrPlacePins();
-  if(!window._wrResizeAttached){
-    window._wrResizeAttached = true;
-    window.addEventListener('resize', _wrPlacePins);
-  }
+  // % positions work regardless of paint timing — no clientWidth needed
+  container.innerHTML = WR_WEEKLY_PINS.map(st =>
+    `<div class="wr-station-pin" id="wr-pin-${st.id}" onclick="wrSelectStation('${st.id}')"
+       style="position:absolute;left:${st.x}%;top:${st.y}%;transform:translate(-50%,-50%);cursor:pointer;text-align:center;user-select:none">
+      ${wrDonutSVG(st.segs, 44)}
+      <div style="font-size:7.5px;color:#111;font-weight:900;margin-top:1px;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 4px;border-radius:3px;letter-spacing:.2px">${st.name}</div>
+    </div>`
+  ).join('');
 }
 function wrSelectStation(id) {
   const st = WR_WEEKLY_PINS.find(s => s.id === id);
