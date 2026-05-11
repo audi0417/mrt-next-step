@@ -2176,22 +2176,22 @@ const WR_SEGS = [
   {label:'觀光旅客', color:'#30D158'},
   {label:'學生族群', color:'#00C8C8'},
 ];
-// x/y as % of map container, segs must sum to 100
+// x/y as % of SVG viewBox (6100×3500), derived from actual circle cx/cy in the SVG
 const WR_WEEKLY_PINS = [
-  {id:'taipei-main',   name:'台北車站',   x:38.0, y:44.0, segs:[42,15,16,18,9]},
-  {id:'ximen',         name:'西門',       x:33.5, y:50.0, segs:[28,32,8,24,8]},
-  {id:'zhongshan',     name:'中山',       x:41.0, y:36.0, segs:[30,25,20,12,13]},
-  {id:'zxf',           name:'忠孝復興',   x:50.5, y:44.0, segs:[32,28,22,8,10]},
-  {id:'zxd',           name:'忠孝敦化',   x:57.0, y:44.0, segs:[25,35,24,6,10]},
-  {id:'nangang',       name:'南港',       x:69.5, y:44.0, segs:[38,10,36,4,12]},
-  {id:'songshan',      name:'松山',       x:61.5, y:36.5, segs:[35,18,32,5,10]},
-  {id:'daan',          name:'大安',       x:53.5, y:54.0, segs:[30,20,28,2,20]},
-  {id:'banqiao',       name:'板橋',       x:22.5, y:57.0, segs:[45,18,22,3,12]},
-  {id:'xinzhuang',     name:'新莊',       x:13.5, y:46.5, segs:[48,12,16,4,20]},
-  {id:'xindian',       name:'新店',       x:47.5, y:79.0, segs:[44,14,8,2,32]},
-  {id:'tamsui',        name:'淡水',       x:32.0, y:8.0,  segs:[25,38,6,26,5]},
-  {id:'zhongzheng',    name:'中正紀念堂', x:38.5, y:53.0, segs:[22,30,10,30,8]},
-  {id:'nanjing-fuxing',name:'南京復興',   x:50.5, y:36.0, segs:[35,20,30,5,10]},
+  {id:'taipei-main',   name:'台北車站',   x:43.4, y:44.3, segs:[42,15,16,18,9]},
+  {id:'ximen',         name:'西門',       x:42.0, y:47.6, segs:[28,32,8,24,8]},
+  {id:'zhongshan',     name:'中山',       x:46.9, y:32.6, segs:[30,25,20,12,13]},
+  {id:'zxf',           name:'忠孝復興',   x:49.4, y:47.6, segs:[32,28,22,8,10]},
+  {id:'zxd',           name:'忠孝敦化',   x:52.0, y:50.6, segs:[25,35,24,6,10]},
+  {id:'nangang',       name:'南港',       x:74.1, y:56.3, segs:[38,10,36,4,12]},
+  {id:'songshan',      name:'松山',       x:50.7, y:20.9, segs:[35,18,32,5,10]},
+  {id:'daan',          name:'大安',       x:49.4, y:57.4, segs:[30,20,28,2,20]},
+  {id:'banqiao',       name:'板橋',       x:24.7, y:67.4, segs:[45,18,22,3,12]},
+  {id:'xinzhuang',     name:'新莊',       x:13.7, y:59.6, segs:[48,12,16,4,20]},
+  {id:'xindian',       name:'新店',       x:48.5, y:79.3, segs:[44,14,8,2,32]},
+  {id:'tamsui',        name:'淡水',       x:40.3, y:6.6,  segs:[25,38,6,26,5]},
+  {id:'zhongzheng',    name:'中正紀念堂', x:36.9, y:60.5, segs:[22,30,10,30,8]},
+  {id:'nanjing-fuxing',name:'南京復興',   x:49.4, y:31.5, segs:[35,20,30,5,10]},
 ];
 function wrDonutSVG(segs, size) {
   const r = 15.915; // circumference ≈ 100
@@ -2253,6 +2253,30 @@ function wrInitMapPanZoom(){
   outer.addEventListener('touchend',()=>{ _wrDrag=false; });
 }
 
+/* Calculate the rendered bounds of the SVG inside the object-fit:contain img */
+function _wrImgBounds(){
+  const outer = document.getElementById('wr-map-outer');
+  if(!outer) return null;
+  const W = outer.clientWidth, H = outer.clientHeight;
+  const ar = 6100/3500; // SVG viewBox aspect ratio
+  let rW, rH, oX, oY;
+  if(W/H > ar){ rH=H; rW=H*ar; oX=(W-rW)/2; oY=0; }
+  else { rW=W; rH=W/ar; oX=0; oY=(H-rH)/2; }
+  return {oX, oY, rW, rH};
+}
+function _wrPlacePins(){
+  const container = document.getElementById('wr-station-pins');
+  if(!container) return;
+  const b = _wrImgBounds();
+  if(!b) return;
+  container.innerHTML = WR_WEEKLY_PINS.map(st =>
+    `<div class="wr-station-pin" id="wr-pin-${st.id}" onclick="wrSelectStation('${st.id}')"
+       style="position:absolute;left:${b.oX + st.x/100*b.rW}px;top:${b.oY + st.y/100*b.rH}px;transform:translate(-50%,-50%);cursor:pointer;text-align:center;user-select:none">
+      ${wrDonutSVG(st.segs, 44)}
+      <div style="font-size:7.5px;color:#111;font-weight:900;margin-top:1px;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 4px;border-radius:3px;letter-spacing:.2px">${st.name}</div>
+    </div>`
+  ).join('');
+}
 function wrBuildWeeklyMap() {
   // legend
   const legend = document.getElementById('wr-seg-legend');
@@ -2268,13 +2292,11 @@ function wrBuildWeeklyMap() {
   const container = document.getElementById('wr-station-pins');
   if (!container || container.dataset.built) return;
   container.dataset.built = '1';
-  container.innerHTML = WR_WEEKLY_PINS.map(st =>
-    `<div class="wr-station-pin" id="wr-pin-${st.id}" onclick="wrSelectStation('${st.id}')"
-       style="position:absolute;left:${st.x}%;top:${st.y}%;transform:translate(-50%,-50%);cursor:pointer;text-align:center;user-select:none">
-      ${wrDonutSVG(st.segs, 44)}
-      <div style="font-size:7.5px;color:#111;font-weight:900;margin-top:1px;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 4px;border-radius:3px;letter-spacing:.2px">${st.name}</div>
-    </div>`
-  ).join('');
+  _wrPlacePins();
+  if(!window._wrResizeAttached){
+    window._wrResizeAttached = true;
+    window.addEventListener('resize', _wrPlacePins);
+  }
 }
 function wrSelectStation(id) {
   const st = WR_WEEKLY_PINS.find(s => s.id === id);
