@@ -460,11 +460,117 @@
   <div class="nav-tabs">
     <button class="ntab active" onclick="switchTab('demo')">互動展示</button>
     <button class="ntab" onclick="switchTab('proposal')">方案說明</button>
+    <button class="ntab" onclick="switchTab('warroom')">即時戰情版</button>
   </div>
-  <a class="nav-logo" href="https://healthymind.tech" target="_blank" style="gap:0">
-    <img src="logo.png" alt="療心智能 HealthyMind.Tech" style="height:28px;opacity:.92;filter:brightness(0) invert(1)">
-  </a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <!-- Bell notification -->
+    <div id="wr-blur-backdrop" onclick="wrCloseBell()"></div>
+    <div style="position:relative;z-index:500">
+      <button id="wr-bell-btn" onclick="wrToggleBell()" style="
+        background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+        border-radius:10px;width:36px;height:36px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+        transition:background .2s;position:relative;
+      ">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span id="wr-bell-badge" style="
+          position:absolute;top:-4px;right:-4px;
+          width:16px;height:16px;border-radius:50%;
+          background:#E03030;border:2px solid rgba(0,63,135,.97);
+          font-size:9px;font-weight:900;color:#fff;
+          display:flex;align-items:center;justify-content:center;
+        ">3</span>
+      </button>
+
+      <!-- Notification panel -->
+      <div id="wr-notif-panel" style="
+        position:absolute;top:calc(100% + 10px);right:0;width:340px;
+        background:#0D1829;
+        border:1px solid rgba(255,255,255,.18);border-radius:16px;
+        box-shadow:0 20px 60px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);
+        z-index:500;opacity:0;pointer-events:none;
+        transform:translateY(-8px);
+        transition:opacity .25s ease,transform .25s ease;
+      ">
+        <!-- Panel header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:13px;font-weight:800;color:#fff">通知中心</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span onclick="wrMarkAllRead()" style="font-size:11px;color:rgba(0,166,166,.9);font-weight:700;cursor:pointer">全部已讀</span>
+            <span onclick="wrCloseBell()" style="font-size:18px;color:rgba(255,255,255,.4);cursor:pointer;line-height:1;padding:0 2px">×</span>
+          </div>
+        </div>
+        <!-- Notifications list -->
+        <div style="padding:8px 0;max-height:320px;overflow-y:auto" id="wr-notif-list">
+
+          <div class="wr-notif-item" data-id="1">
+            <div class="wr-notif-dot" style="background:#E03030"></div>
+            <div class="wr-notif-body">
+              <div class="wr-notif-title">⚠ 忠孝復興站 兌換率異常下降</div>
+              <div class="wr-notif-sub">Agent 接受率從 71% 跌至 53%，建議檢查任務內容設定</div>
+              <div class="wr-notif-time">30 分鐘前 · 板南線</div>
+            </div>
+          </div>
+
+          <div class="wr-notif-item" data-id="2">
+            <div class="wr-notif-dot" style="background:#FFD60A"></div>
+            <div class="wr-notif-body">
+              <div class="wr-notif-title">🎯 跨商家兌換率突破本月目標 60%</div>
+              <div class="wr-notif-sub">松山線沿線今日兌換率達 18.2%，信義線整體 +4.1%</div>
+              <div class="wr-notif-time">1 小時前 · 跨商家任務</div>
+            </div>
+          </div>
+
+          <div class="wr-notif-item" data-id="3">
+            <div class="wr-notif-dot" style="background:#00A6A6"></div>
+            <div class="wr-notif-body">
+              <div class="wr-notif-title">🌧 明日降雨預測 > 80%，建議排入雨天任務</div>
+              <div class="wr-notif-sub">歷史數據：雨天地下街任務接受率比平均高 +22%</div>
+              <div class="wr-notif-time">2 小時前 · 天氣觸發</div>
+            </div>
+          </div>
+
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,.08);text-align:center">
+          <span style="font-size:11px;color:rgba(255,255,255,.3);font-weight:700">共 3 則未讀通知</span>
+        </div>
+      </div>
+    </div>
+
+    <a class="nav-logo" href="https://healthymind.tech" target="_blank" style="gap:0">
+      <img src="logo.png" alt="療心智能 HealthyMind.Tech" style="height:28px;opacity:.92;filter:brightness(0) invert(1)">
+    </a>
+  </div>
 </nav>
+
+<style>
+.wr-notif-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px 16px;cursor:pointer;transition:background .15s;
+  border-left:3px solid transparent;
+}
+.wr-notif-item:hover{background:rgba(255,255,255,.05)}
+.wr-notif-item.unread{border-left-color:rgba(255,255,255,.15)}
+.wr-notif-item.read{opacity:.5}
+.wr-notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.wr-notif-body{flex:1;min-width:0}
+.wr-notif-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:4px;line-height:1.35}
+.wr-notif-sub{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5;margin-bottom:5px}
+.wr-notif-time{font-size:11px;color:rgba(255,255,255,.42);font-weight:700}
+#wr-bell-btn:hover{background:rgba(255,255,255,.16)!important}
+#wr-blur-backdrop{
+  position:fixed;inset:0;z-index:498;
+  backdrop-filter:blur(8px) brightness(.7);
+  -webkit-backdrop-filter:blur(8px) brightness(.7);
+  background:rgba(4,10,22,.3);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+#wr-blur-backdrop.show{opacity:1;pointer-events:auto}
+</style>
 
 <!-- ════════════════════════════════════════
      DEMO TAB
@@ -841,7 +947,8 @@ function switchTab(id) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  document.querySelectorAll('.ntab')[id === 'demo' ? 0 : 1].classList.add('active');
+  const tabIndex = id === 'demo' ? 0 : id === 'proposal' ? 1 : 2;
+  document.querySelectorAll('.ntab')[tabIndex].classList.add('active');
   window.scrollTo({top: 0, behavior: 'smooth'});
   if (id === 'demo') setTimeout(startDemo, 300);
 }
@@ -1255,6 +1362,979 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 10000);
+</script>
+
+
+<!-- ════════════════════════════════════════
+     WARROOM TAB
+════════════════════════════════════════ -->
+<div id="tab-warroom" class="tab-content wr-tab">
+<style>
+.wr-tab{
+  --wr-bg:#080F1E;--wr-bg2:#0E1B2E;
+  --wr-border:rgba(255,255,255,.12);--wr-border2:rgba(255,255,255,.22);
+  --wr-text:#F0F5FF;--wr-text2:rgba(255,255,255,.78);--wr-text3:rgba(255,255,255,.52);
+  --wr-green:#34C759;--wr-teal:#00C8C8;--wr-amber:#FFD60A;
+  --wr-red:#E03030;--wr-blue:#2176DB;--wr-purple:#9C5AFF;
+  background:var(--wr-bg);min-height:calc(100vh - 58px);
+}
+/* ── Sidebar ── */
+.wr-sidebar{
+  width:220px;flex-shrink:0;
+  background:#060D1A;border-right:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;
+  height:calc(100vh - 58px);position:sticky;top:58px;
+  padding:20px 0 24px;
+}
+.wr-sidebar-section{margin-bottom:6px}
+.wr-sidebar-label{
+  font-size:9px;font-weight:800;color:rgba(255,255,255,.28);
+  letter-spacing:2px;text-transform:uppercase;
+  padding:0 18px;margin-bottom:6px;
+}
+.wr-nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 18px;cursor:pointer;
+  transition:all .18s;position:relative;
+  border-left:3px solid transparent;
+}
+.wr-nav-item:hover{background:rgba(255,255,255,.05);color:var(--wr-text)}
+.wr-nav-item.active{
+  background:rgba(33,118,219,.15);
+  border-left-color:var(--wr-blue);
+}
+.wr-nav-item.active .wr-nav-label{color:#fff}
+.wr-nav-item.active .wr-nav-icon{color:var(--wr-blue)}
+.wr-nav-icon{
+  width:32px;height:32px;border-radius:9px;
+  background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .18s;
+  color:rgba(255,255,255,.45);
+}
+.wr-nav-item:hover .wr-nav-icon{color:rgba(255,255,255,.8)}
+.wr-nav-item.active .wr-nav-icon{background:rgba(33,118,219,.25);color:#5AC8FA}
+.wr-nav-label{font-size:13px;font-weight:700;color:rgba(255,255,255,.65);flex:1;line-height:1.2;min-width:0}
+.wr-nav-badge{
+  font-size:9px;font-weight:800;
+  padding:2px 6px;border-radius:20px;
+}
+.wr-nav-badge.red{background:rgba(224,48,48,.25);color:#FF6B6B}
+.wr-nav-badge.soon{background:rgba(255,255,255,.07);color:rgba(255,255,255,.3);font-size:8px}
+.wr-sidebar-divider{height:1px;background:rgba(255,255,255,.07);margin:10px 18px}
+.wr-sidebar-bottom{margin-top:auto;padding:0 14px}
+.wr-sidebar-user{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:12px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:background .2s;
+}
+.wr-sidebar-user:hover{background:rgba(255,255,255,.08)}
+.wr-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--wr-blue),var(--wr-teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:#fff;flex-shrink:0;
+}
+.wr-user-name{font-size:12px;font-weight:800;color:var(--wr-text)}
+.wr-user-role{font-size:10px;color:var(--wr-text3);margin-top:1px}
+/* ── Main content area ── */
+.tab-content.wr-tab.active{display:flex}
+.wr-main{flex:1;overflow-y:auto;padding:20px 24px 40px;min-width:0}
+/* ── Sub views ── */
+.wr-view{display:none}
+.wr-view.active{display:block;animation:wrFade .25s ease}
+.wr-station-pin{transition:transform .18s ease,filter .18s ease}
+.wr-station-pin:hover{transform:translate(-50%,-50%) scale(1.2)!important;filter:brightness(1.2);z-index:5}
+.wr-station-pin.wr-pin-selected{transform:translate(-50%,-50%) scale(1.35)!important;z-index:10}
+.wr-seg-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;flex:1}
+.wr-seg-fill{height:100%;border-radius:2px;transition:width .6s ease}
+@keyframes wrFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* ── Coming soon placeholder ── */
+.wr-coming-soon{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;gap:16px;
+}
+.wr-cs-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+}
+.wr-cs-title{font-size:20px;font-weight:900;color:rgba(255,255,255,.4)}
+.wr-cs-sub{font-size:13px;color:rgba(255,255,255,.25);text-align:center;max-width:260px;line-height:1.6}
+.wr-section{margin-bottom:18px}
+.wr-alert{
+  background:rgba(224,48,48,.12);border:1px solid rgba(224,48,48,.3);
+  border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px;
+}
+.wr-alert-icon{width:32px;height:32px;border-radius:9px;background:rgba(224,48,48,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.wr-alert-text{flex:1}
+.wr-alert-title{font-size:13px;font-weight:800;color:#FF6B6B;margin-bottom:2px}
+.wr-alert-sub{font-size:11px;color:var(--wr-text3)}
+.wr-alert-dismiss{font-size:11px;color:var(--wr-text3);cursor:pointer;padding:4px 10px;background:rgba(255,255,255,.06);border-radius:6px;transition:background .2s;flex-shrink:0}
+.wr-alert-dismiss:hover{background:rgba(255,255,255,.12)}
+/* pulse */
+.wr-pulse-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.wr-pulse{background:var(--wr-bg2);border:1px solid var(--wr-border);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden}
+.wr-pulse::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.wr-pulse.g::before{background:var(--wr-green)}
+.wr-pulse.t::before{background:var(--wr-teal)}
+.wr-pulse.a::before{background:var(--wr-amber)}
+.wr-pulse.b::before{background:var(--wr-blue)}
+.wr-pulse-lbl{font-size:11px;font-weight:800;color:var(--wr-text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.wr-pulse-val{font-size:32px;font-weight:900;line-height:1;color:#fff;font-variant-numeric:tabular-nums;margin-bottom:7px}
+.wr-pulse-delta{font-size:12px;font-weight:800;color:var(--wr-green)}
+.wr-spark{margin-top:10px;height:28px}
+.wr-spark svg{width:100%;height:28px}
+/* mid */
+.wr-mid{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:18px}
+.wr-panel{background:var(--wr-bg2);border:1px solid var(--wr-border);border-radius:16px;padding:18px 20px}
+.wr-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.wr-panel-title{font-size:14px;font-weight:900;color:var(--wr-text);letter-spacing:.2px}
+.wr-panel-badge{font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;background:rgba(0,200,200,.2);color:var(--wr-teal)}
+/* filter */
+.wr-filter{display:flex;gap:7px;margin-bottom:12px}
+.wr-fbtn{background:rgba(255,255,255,.06);border:1px solid var(--wr-border);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--wr-text2);cursor:pointer;transition:all .2s}
+.wr-fbtn:hover{background:rgba(255,255,255,.1)}
+.wr-fbtn.active{background:rgba(0,91,172,.25);border-color:rgba(0,91,172,.5);color:#fff}
+/* station map */
+.wr-smap{display:flex;flex-direction:column;gap:10px}
+.wr-srow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.wr-sitem{background:rgba(255,255,255,.04);border:1px solid var(--wr-border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px}
+.wr-sitem:hover{background:rgba(255,255,255,.08);border-color:var(--wr-border2);transform:translateY(-2px)}
+.wr-sitem.sel{background:rgba(0,91,172,.2);border-color:rgba(0,91,172,.7);box-shadow:0 0 20px rgba(0,91,172,.25)}
+.wr-sdot{border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#fff}
+.wr-sdot.xl{width:58px;height:58px;font-size:11px}.wr-sdot.lg{width:46px;height:46px;font-size:10px}.wr-sdot.md{width:36px;height:36px;font-size:9px}.wr-sdot.sm{width:26px;height:26px;font-size:8px}
+.wr-sdot.dblue{background:radial-gradient(circle,#2176DB,#005BAC)}
+.wr-sdot.dteal{background:radial-gradient(circle,#20C6C6,#00A6A6)}
+.wr-sdot.dorange{background:radial-gradient(circle,#E08030,#B05010)}
+.wr-sdot.dpurple{background:radial-gradient(circle,#9C5AFF,#7C3AED)}
+.wr-sname{font-size:14px;font-weight:900;color:#fff;line-height:1}
+.wr-smeta{font-size:11px;color:var(--wr-text3);margin-top:4px;font-weight:700}
+.wr-sbar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:7px;overflow:hidden}
+.wr-sbar-fill{height:100%;border-radius:1px;transition:width .8s ease}
+.wr-legend{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--wr-border)}
+.wr-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--wr-text3)}
+.wr-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* agent table */
+.wr-table{width:100%;border-collapse:collapse}
+.wr-table th{font-size:10px;font-weight:800;color:var(--wr-text2);text-transform:uppercase;letter-spacing:.5px;padding:0 10px 10px;text-align:left;border-bottom:1px solid var(--wr-border)}
+.wr-table th:not(:first-child){text-align:right}
+.wr-table td{padding:10px 10px;border-bottom:1px solid var(--wr-border);font-size:12px;vertical-align:middle}
+.wr-table tr:last-child td{border-bottom:none}
+.wr-table tr{transition:background .15s;cursor:pointer}
+.wr-table tr:hover td{background:rgba(255,255,255,.03)}
+.wr-rank{width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,.08);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--wr-text2);margin-right:5px}
+.wr-rank.r1{background:rgba(255,214,10,.2);color:var(--wr-amber)}
+.wr-rank.r2{background:rgba(0,166,166,.15);color:var(--wr-teal)}
+.wr-rank.r3{background:rgba(0,91,172,.2);color:#5AC8FA}
+.wr-tname{font-weight:800;color:#fff}
+.wr-ttype{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;margin-left:6px}
+.wr-ttype.tc{background:rgba(0,91,172,.2);color:#5AC8FA}
+.wr-ttype.to{background:rgba(0,166,166,.15);color:var(--wr-teal)}
+.wr-ttype.tx{background:rgba(255,149,0,.15);color:#FF9F0A}
+.wr-ttype.tw{background:rgba(124,58,237,.2);color:#A78BFA}
+.wr-numcol{text-align:right;font-variant-numeric:tabular-nums;color:var(--wr-text2);font-weight:700}
+.wr-pctcol{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:13px}
+.wr-pct-hi{color:#4CD964}.wr-pct-md{color:#00C8C8}.wr-pct-lo{color:rgba(255,255,255,.65)}
+.wr-rbar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:3px;overflow:hidden}
+.wr-rbar-fill{height:100%;border-radius:2px}
+/* persona */
+.wr-persona-row{margin-top:14px}
+.wr-persona-lbl-row{font-size:10px;font-weight:800;color:var(--wr-text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.wr-pbar{display:flex;height:5px;border-radius:3px;overflow:hidden;gap:2px}
+.wr-pseg{height:100%;border-radius:3px;transition:width .8s ease}
+.wr-pseg.pw{background:var(--wr-blue)}.wr-pseg.ps{background:var(--wr-teal)}.wr-pseg.pt{background:var(--wr-amber)}
+.wr-plabels{display:flex;gap:14px;margin-top:6px}
+.wr-plbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--wr-text2);font-weight:700}
+.wr-pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* kpi row */
+.wr-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wr-kpi{background:var(--wr-bg2);border:1px solid var(--wr-border);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .25s}
+.wr-kpi:hover{border-color:var(--wr-border2)}
+.wr-kpi.open{border-color:rgba(0,91,172,.5)}
+.wr-kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.wr-kpi-lbl{font-size:11px;font-weight:800;color:var(--wr-text2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.wr-kpi-val{font-size:26px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.wr-kpi-delta{font-size:12px;font-weight:800;color:var(--wr-green);margin-top:4px}
+.wr-kpi-target{font-size:11px;color:var(--wr-text3);margin-top:3px}
+.wr-kpi-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.wr-kpi-chart{height:50px}
+.wr-kpi-chart svg{width:100%;height:50px}
+.wr-kpi-note{font-size:11px;color:var(--wr-text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--wr-border);display:none;line-height:1.65}
+.wr-kpi.open .wr-kpi-note{display:block}
+@media(max-width:1200px){
+  .wr-pulse-row{grid-template-columns:repeat(2,1fr)}
+  .wr-mid{grid-template-columns:1fr}
+  .wr-kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+
+  <!-- ── Sidebar ── -->
+  <aside class="wr-sidebar">
+    <div class="wr-sidebar-section">
+      <div class="wr-sidebar-label">核心儀表板</div>
+
+      <div class="wr-nav-item active" onclick="wrSwitchView('realtime',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/><path d="M20.49 4.51a11 11 0 0 1 0 15.56"/><path d="M3.51 4.51a11 11 0 0 0 0 15.56"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">即時監控</div>
+        <span class="wr-nav-badge red">1</span>
+      </div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('weekly',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">週期回顧</div>
+      </div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('phase',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">Phase 里程碑</div>
+      </div>
+    </div>
+
+    <div class="wr-sidebar-divider"></div>
+
+    <div class="wr-sidebar-section">
+      <div class="wr-sidebar-label">營運監測</div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('cabin',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 4v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">車廂擁擠度</div>
+        <span class="wr-nav-badge soon">即將推出</span>
+      </div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('platform',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">月台擁擠度</div>
+        <span class="wr-nav-badge soon">即將推出</span>
+      </div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('dispatch',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">發車監測</div>
+        <span class="wr-nav-badge soon">即將推出</span>
+      </div>
+    </div>
+
+    <div class="wr-sidebar-divider"></div>
+
+    <div class="wr-sidebar-section">
+      <div class="wr-sidebar-label">報表與設定</div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('reports',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">報表匯出</div>
+        <span class="wr-nav-badge soon">即將推出</span>
+      </div>
+
+      <div class="wr-nav-item" onclick="wrSwitchView('settings',this)">
+        <div class="wr-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
+        <div class="wr-nav-label">系統設定</div>
+        <span class="wr-nav-badge soon">即將推出</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <div class="wr-main">
+
+  <!-- View: 即時監控 -->
+  <div class="wr-view active" id="wr-view-realtime">
+
+  <!-- Pulse Row -->
+  <div class="wr-pulse-row">
+    <div class="wr-pulse g">
+      <div class="wr-pulse-lbl">今日 Agent 觸發人次</div>
+      <div class="wr-pulse-val" id="wr-p1">0</div>
+      <div class="wr-pulse-delta">▲ +12.4% vs 昨日</div>
+      <div class="wr-spark">
+        <svg viewBox="0 0 120 28" preserveAspectRatio="none">
+          <polyline points="0,24 15,20 30,22 45,17 60,19 75,13 90,11 105,8 120,6" fill="none" stroke="rgba(52,199,89,.6)" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,28 0,24 15,20 30,22 45,17 60,19 75,13 90,11 105,8 120,6 120,28" fill="rgba(52,199,89,.1)" stroke="none"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wr-pulse t">
+      <div class="wr-pulse-lbl">任務接受率</div>
+      <div class="wr-pulse-val" id="wr-p2">0<span style="font-size:16px;opacity:.6">%</span></div>
+      <div class="wr-pulse-delta">▲ +6.2% vs 上週同期</div>
+      <div class="wr-spark">
+        <svg viewBox="0 0 120 28" preserveAspectRatio="none">
+          <polyline points="0,20 15,18 30,16 45,20 60,14 75,10 90,12 105,8 120,6" fill="none" stroke="rgba(0,166,166,.7)" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,28 0,20 15,18 30,16 45,20 60,14 75,10 90,12 105,8 120,6 120,28" fill="rgba(0,166,166,.1)" stroke="none"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wr-pulse a">
+      <div class="wr-pulse-lbl">跨商家兌換筆數</div>
+      <div class="wr-pulse-val" id="wr-p3">0</div>
+      <div class="wr-pulse-delta">▲ +28.3% vs 上月</div>
+      <div class="wr-spark">
+        <svg viewBox="0 0 120 28" preserveAspectRatio="none">
+          <polyline points="0,22 15,20 30,18 45,22 60,16 75,12 90,14 105,8 120,5" fill="none" stroke="rgba(255,214,10,.6)" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,28 0,22 15,20 30,18 45,22 60,16 75,12 90,14 105,8 120,5 120,28" fill="rgba(255,214,10,.08)" stroke="none"/>
+        </svg>
+      </div>
+    </div>
+    <div class="wr-pulse b">
+      <div class="wr-pulse-lbl">點數流通率</div>
+      <div class="wr-pulse-val" id="wr-p4">0<span style="font-size:16px;opacity:.6">%</span></div>
+      <div class="wr-pulse-delta">▲ +3.1% vs 上月</div>
+      <div class="wr-spark">
+        <svg viewBox="0 0 120 28" preserveAspectRatio="none">
+          <polyline points="0,22 15,20 30,22 45,18 60,16 75,18 90,12 105,10 120,8" fill="none" stroke="rgba(0,91,172,.9)" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="0,28 0,22 15,20 30,22 45,18 60,16 75,18 90,12 105,10 120,8 120,28" fill="rgba(0,91,172,.13)" stroke="none"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mid Row -->
+  <div class="wr-mid">
+
+    <!-- Station Map -->
+    <div class="wr-panel">
+      <div class="wr-panel-hdr">
+        <div class="wr-panel-title">站點熱力圖 · Agent 觸發密度</div>
+        <div class="wr-panel-badge" id="wr-map-label">全線總覽</div>
+      </div>
+      <div class="wr-filter">
+        <div class="wr-fbtn active" onclick="wrFilter(this,'all')">全部</div>
+        <div class="wr-fbtn" onclick="wrFilter(this,'consume')">消費任務</div>
+        <div class="wr-fbtn" onclick="wrFilter(this,'offpeak')">離峰導流</div>
+        <div class="wr-fbtn" onclick="wrFilter(this,'cross')">跨商家</div>
+      </div>
+      <div class="wr-smap">
+        <div class="wr-srow">
+          <div class="wr-sitem sel" onclick="wrSelectStation(this,'忠孝復興')" data-task="consume">
+            <div class="wr-sdot xl dblue">4.8K</div>
+            <div><div class="wr-sname">忠孝復興</div><div class="wr-smeta">消費任務</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:96%;background:var(--wr-green)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'101/世貿')" data-task="cross">
+            <div class="wr-sdot lg dteal">3.2K</div>
+            <div><div class="wr-sname">101/世貿</div><div class="wr-smeta">跨商家兌換</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:64%;background:var(--wr-teal)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'西門')" data-task="offpeak">
+            <div class="wr-sdot lg dorange">2.9K</div>
+            <div><div class="wr-sname">西門</div><div class="wr-smeta">離峰導流</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:58%;background:var(--wr-amber)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'大安森林')" data-task="offpeak">
+            <div class="wr-sdot md dorange">2.1K</div>
+            <div><div class="wr-sname">大安森林</div><div class="wr-smeta">離峰導流</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:42%;background:var(--wr-amber)"></div></div></div>
+          </div>
+        </div>
+        <div class="wr-srow">
+          <div class="wr-sitem" onclick="wrSelectStation(this,'信義安和')" data-task="consume">
+            <div class="wr-sdot md dblue">1.9K</div>
+            <div><div class="wr-sname">信義安和</div><div class="wr-smeta">消費任務</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:38%;background:var(--wr-green)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'中山')" data-task="cross">
+            <div class="wr-sdot md dteal">1.7K</div>
+            <div><div class="wr-sname">中山</div><div class="wr-smeta">跨商家兌換</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:33%;background:var(--wr-teal)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'松山機場')" data-task="consume">
+            <div class="wr-sdot md dpurple">1.2K</div>
+            <div><div class="wr-sname">松山機場</div><div class="wr-smeta">消費任務</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:24%;background:var(--wr-purple)"></div></div></div>
+          </div>
+          <div class="wr-sitem" onclick="wrSelectStation(this,'南港展覽')" data-task="offpeak">
+            <div class="wr-sdot sm dorange">980</div>
+            <div><div class="wr-sname">南港展覽</div><div class="wr-smeta">離峰導流</div><div class="wr-sbar"><div class="wr-sbar-fill" style="width:20%;background:var(--wr-amber)"></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="wr-legend">
+        <div class="wr-leg-item"><div class="wr-leg-dot" style="background:var(--wr-blue)"></div>消費任務</div>
+        <div class="wr-leg-item"><div class="wr-leg-dot" style="background:var(--wr-amber)"></div>離峰導流</div>
+        <div class="wr-leg-item"><div class="wr-leg-dot" style="background:var(--wr-teal)"></div>跨商家兌換</div>
+        <div class="wr-leg-item"><div class="wr-leg-dot" style="background:var(--wr-purple)"></div>觀光組合</div>
+      </div>
+    </div>
+
+    <!-- Agent Decisions -->
+    <div class="wr-panel">
+      <div class="wr-panel-hdr">
+        <div class="wr-panel-title" id="wr-decisions-title">Agent 決策摘要 · 忠孝復興</div>
+        <div style="font-size:10px;color:var(--wr-text3);font-weight:700">今日截至目前</div>
+      </div>
+      <table class="wr-table">
+        <thead>
+          <tr>
+            <th style="width:46%">任務名稱</th>
+            <th>觸發人次</th>
+            <th>接受率</th>
+            <th>轉換率</th>
+          </tr>
+        </thead>
+        <tbody id="wr-tbody"></tbody>
+      </table>
+      <div class="wr-persona-row">
+        <div class="wr-persona-lbl-row">用戶角色分布</div>
+        <div class="wr-pbar">
+          <div class="wr-pseg pw" id="wr-pw" style="width:52%"></div>
+          <div class="wr-pseg ps" id="wr-ps" style="width:28%"></div>
+          <div class="wr-pseg pt" id="wr-pt" style="width:20%"></div>
+        </div>
+        <div class="wr-plabels" id="wr-plabels">
+          <div class="wr-plbl"><div class="wr-pdot" style="background:var(--wr-blue)"></div>上班族 52%</div>
+          <div class="wr-plbl"><div class="wr-pdot" style="background:var(--wr-teal)"></div>學生族 28%</div>
+          <div class="wr-plbl"><div class="wr-pdot" style="background:var(--wr-amber)"></div>觀光客 20%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Trend Row -->
+  <div class="wr-kpi-row">
+    <div class="wr-kpi" onclick="this.classList.toggle('open')">
+      <div class="wr-kpi-top">
+        <div>
+          <div class="wr-kpi-lbl">任務接受率</div>
+          <div class="wr-kpi-val" style="color:#34C759">68<span style="font-size:14px;opacity:.6">%</span></div>
+          <div class="wr-kpi-delta">▲ +6.2% vs 上週</div>
+          <div class="wr-kpi-target">目標：75% · 缺口 7%</div>
+        </div>
+        <div class="wr-kpi-icon" style="background:rgba(52,199,89,.12)">✅</div>
+      </div>
+      <div class="wr-kpi-chart">
+        <svg viewBox="0 0 260 50" preserveAspectRatio="none">
+          <path d="M0,45 C30,42 60,38 90,34 C120,30 150,32 180,24 C210,16 235,14 260,8" fill="none" stroke="#34C759" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M0,50 L0,45 C30,42 60,38 90,34 C120,30 150,32 180,24 C210,16 235,14 260,8 L260,50 Z" fill="rgba(52,199,89,.07)" stroke="none"/>
+          <line x1="165" y1="0" x2="165" y2="50" stroke="rgba(224,48,48,.4)" stroke-width="1" stroke-dasharray="3,3"/>
+        </svg>
+      </div>
+      <div class="wr-kpi-note">5/3 暴雨，雨天地下街任務觸發率 +34%，帶動整體接受率上升 +8.2%。建議雨天預測成立時提前排入排程。</div>
+    </div>
+    <div class="wr-kpi" onclick="this.classList.toggle('open')">
+      <div class="wr-kpi-top">
+        <div>
+          <div class="wr-kpi-lbl">跨商家兌換率</div>
+          <div class="wr-kpi-val" style="color:#00A6A6">12.4<span style="font-size:14px;opacity:.6">%</span></div>
+          <div class="wr-kpi-delta">▲ +2.1% vs 上月</div>
+          <div class="wr-kpi-target">目標：20% · 缺口 7.6%</div>
+        </div>
+        <div class="wr-kpi-icon" style="background:rgba(0,166,166,.12)">🔗</div>
+      </div>
+      <div class="wr-kpi-chart">
+        <svg viewBox="0 0 260 50" preserveAspectRatio="none">
+          <path d="M0,46 C30,44 60,42 90,40 C120,38 150,40 180,32 C210,24 235,20 260,14" fill="none" stroke="#00A6A6" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M0,50 L0,46 C30,44 60,42 90,40 C120,38 150,40 180,32 C210,24 235,20 260,14 L260,50 Z" fill="rgba(0,166,166,.07)" stroke="none"/>
+        </svg>
+      </div>
+      <div class="wr-kpi-note">成長主要來自全家便利商店合作（5/1 上線）。松山線沿線帶動最明顯，兌換率達 18.2%。</div>
+    </div>
+    <div class="wr-kpi" onclick="this.classList.toggle('open')">
+      <div class="wr-kpi-top">
+        <div>
+          <div class="wr-kpi-lbl">非票價收入貢獻</div>
+          <div class="wr-kpi-val" style="color:#FFD60A">2.3<span style="font-size:14px;opacity:.6">M</span></div>
+          <div class="wr-kpi-delta">▲ +18% vs Q上季</div>
+          <div class="wr-kpi-target">月目標 NT$3M · 進度 77%</div>
+        </div>
+        <div class="wr-kpi-icon" style="background:rgba(255,214,10,.1)">💰</div>
+      </div>
+      <div class="wr-kpi-chart">
+        <svg viewBox="0 0 260 50" preserveAspectRatio="none">
+          <path d="M0,48 C30,46 60,44 90,44 C120,44 150,42 180,36 C210,28 235,24 260,16" fill="none" stroke="#FFD60A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M0,50 L0,48 C30,46 60,44 90,44 C120,44 150,42 180,36 C210,28 235,24 260,16 L260,50 Z" fill="rgba(255,214,10,.06)" stroke="none"/>
+        </svg>
+      </div>
+      <div class="wr-kpi-note">Q1 同期 NT$1.95M，成長 18%。由跨商家聯盟手續費與任務獎勵加碼活動貢獻。預計月底可達 NT$2.9M。</div>
+    </div>
+  </div>
+  </div><!-- /wr-view-realtime -->
+
+  <!-- View: 週期回顧 -->
+  <div class="wr-view" id="wr-view-weekly">
+    <!-- Header + legend -->
+    <div style="margin-bottom:14px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:11px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">週期回顧</div>
+        <div style="font-size:22px;font-weight:900;color:var(--wr-text)">族群分布 · 站點熱圖</div>
+      </div>
+      <div id="wr-seg-legend" style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px"></div>
+    </div>
+
+    <!-- MRT Map with station donut overlays + pan/zoom -->
+    <div class="wr-panel" style="padding:0;overflow:hidden;margin-bottom:14px;border:1px solid rgba(74,158,255,.18)">
+      <!-- zoom controls -->
+      <div style="position:relative">
+        <div style="position:absolute;top:8px;right:8px;z-index:20;display:flex;gap:4px">
+          <button onclick="wrMapZoom(1.25)" style="width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.9);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;font-weight:700;line-height:1">+</button>
+          <button onclick="wrMapZoom(0.8)" style="width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.9);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;font-weight:700;line-height:1">−</button>
+          <button onclick="wrMapReset()" style="height:28px;padding:0 8px;border-radius:6px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.9);font-size:10px;cursor:pointer;color:#555;font-weight:700">重置</button>
+        </div>
+        <div id="wr-map-outer" style="width:100%;height:520px;overflow:hidden;background:#EFEFEF;cursor:grab;user-select:none;position:relative">
+          <div id="wr-map-inner" style="position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0">
+            <img src="taipei-v1.3-clean.svg"
+                 id="wr-map-svg-img"
+                 style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block"
+                 draggable="false" alt="Taipei MRT">
+            <!-- Station donut pins — injected by JS (positioned as % of inner container) -->
+            <div id="wr-station-pins" style="position:absolute;inset:0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Station detail + weekly stats -->
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px">
+      <!-- Selected station detail -->
+      <div class="wr-panel" id="wr-station-detail" style="min-height:120px">
+        <div style="font-size:10px;font-weight:800;color:var(--wr-text3);letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase">站點族群詳情</div>
+        <div id="wr-station-detail-inner" style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:12px 0;gap:6px;opacity:.4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <div style="font-size:11px;color:rgba(255,255,255,.5)">點選地圖站點查看族群組成</div>
+          </div>
+        </div>
+      </div>
+      <!-- Weekly stats -->
+      <div class="wr-panel">
+        <div style="font-size:10px;font-weight:800;color:var(--wr-text3);letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase">本週 Agent 成效</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(255,255,255,.04);border-radius:9px;padding:10px 12px">
+            <div style="font-size:20px;font-weight:900;color:#34C759">68%</div>
+            <div style="font-size:9px;color:var(--wr-text3);margin-top:2px;font-weight:700">任務接受率</div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:9px;padding:10px 12px">
+            <div style="font-size:20px;font-weight:900;color:#00C8C8">12.4%</div>
+            <div style="font-size:9px;color:var(--wr-text3);margin-top:2px;font-weight:700">跨商家兌換</div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:9px;padding:10px 12px">
+            <div style="font-size:20px;font-weight:900;color:#FFD60A">13,210</div>
+            <div style="font-size:9px;color:var(--wr-text3);margin-top:2px;font-weight:700">日均觸發人次</div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:9px;padding:10px 12px">
+            <div style="font-size:20px;font-weight:900;color:#BF5AF2">389,420</div>
+            <div style="font-size:9px;color:var(--wr-text3);margin-top:2px;font-weight:700">月累計服務人次</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--wr-border)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <div style="font-size:9px;color:var(--wr-text3);font-weight:700">月目標進度</div>
+            <div style="font-size:9px;font-weight:800;color:#34C759">77.9%</div>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden">
+            <div style="width:78%;height:100%;background:linear-gradient(90deg,#34C759,#00C8C8);border-radius:3px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /wr-view-weekly -->
+
+  <!-- View: Phase 里程碑 -->
+  <div class="wr-view" id="wr-view-phase">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Phase 里程碑</div>
+      <div style="font-size:22px;font-weight:900;color:var(--wr-text)">三階段推進進度</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+      <!-- Phase 1 -->
+      <div class="wr-panel" style="border-color:rgba(52,199,89,.3)">
+        <div style="font-size:10px;font-weight:800;color:var(--wr-text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Phase 1</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:2px">點數任務化</div>
+        <div style="font-size:11px;color:var(--wr-text3);margin-bottom:12px;font-style:italic">基礎驗證期 · 規則引擎</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(52,199,89,.15);color:#34C759;margin-bottom:14px">✓ 已完成</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">任務接受率</span><span style="font-size:12px;font-weight:800;color:#34C759">✓ 58%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:100%;height:100%;background:#34C759;border-radius:2px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">站內消費轉換率</span><span style="font-size:12px;font-weight:800;color:#34C759">✓ 32%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:100%;height:100%;background:#34C759;border-radius:2px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">試點站導入數</span><span style="font-size:12px;font-weight:800;color:#34C759">✓ 12 站</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:100%;height:100%;background:#34C759;border-radius:2px"></div></div></div>
+        </div>
+        <div style="font-size:10px;color:var(--wr-text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--wr-border)">🗓 完成：2026 年 2 月</div>
+      </div>
+      <!-- Phase 2 -->
+      <div class="wr-panel" style="border-color:rgba(0,200,200,.5);box-shadow:0 0 24px rgba(0,200,200,.08)">
+        <div style="font-size:10px;font-weight:800;color:var(--wr-text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Phase 2</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:2px">跨商家聯盟</div>
+        <div style="font-size:11px;color:var(--wr-text3);margin-bottom:12px;font-style:italic">成長期 · AI 個人化</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(0,200,200,.15);color:#00C8C8;margin-bottom:14px">▶ 進行中</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">跨商家兌換率</span><span style="font-size:12px;font-weight:800;color:#00C8C8">12.4% / 20%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:62%;height:100%;background:linear-gradient(90deg,#00C8C8,#2176DB);border-radius:2px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">導流到店率</span><span style="font-size:12px;font-weight:800;color:#00C8C8">42% / 60%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:70%;height:100%;background:linear-gradient(90deg,#00C8C8,#2176DB);border-radius:2px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">合作商家數</span><span style="font-size:12px;font-weight:800;color:#00C8C8">23 / 50 家</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:46%;height:100%;background:linear-gradient(90deg,#00C8C8,#2176DB);border-radius:2px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">任務接受率</span><span style="font-size:12px;font-weight:800;color:#00C8C8">68% / 75%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:91%;height:100%;background:linear-gradient(90deg,#00C8C8,#2176DB);border-radius:2px"></div></div></div>
+        </div>
+        <div style="font-size:10px;color:#00C8C8;margin-top:14px;padding-top:10px;border-top:1px solid var(--wr-border);font-weight:700">🤖 預估完成：2026 年 Q4</div>
+      </div>
+      <!-- Phase 3 -->
+      <div class="wr-panel" style="opacity:.5">
+        <div style="font-size:10px;font-weight:800;color:var(--wr-text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Phase 3</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:2px">城市決策引擎</div>
+        <div style="font-size:11px;color:var(--wr-text3);margin-bottom:12px;font-style:italic">平台化期 · 強化學習</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--wr-text3);margin-bottom:14px">⏸ 尚未開始</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">尖離峰分流效果</span><span style="font-size:12px;font-weight:700;color:var(--wr-text3)">目標 15%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px"></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">非票價收入成長</span><span style="font-size:12px;font-weight:700;color:var(--wr-text3)">目標 +30%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px"></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:700">局處合作介面</span><span style="font-size:12px;font-weight:700;color:var(--wr-text3)">開放對接</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:2px"></div></div>
+        </div>
+        <div style="font-size:10px;color:var(--wr-text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--wr-border)">🎯 解鎖條件：Phase 2 全數達標</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+      <div class="wr-panel" style="text-align:center;padding:20px 16px"><div style="font-size:10px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">整體進度</div><div style="font-size:42px;font-weight:900;color:#00C8C8">P2</div><div style="font-size:11px;color:var(--wr-text3);margin-top:2px">共 3 個 Phase</div></div>
+      <div class="wr-panel" style="text-align:center;padding:20px 16px"><div style="font-size:10px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">KPI 達標</div><div style="font-size:42px;font-weight:900;color:#34C759">5</div><div style="font-size:11px;color:var(--wr-text3);margin-top:2px">/ 7 項已達標</div></div>
+      <div class="wr-panel" style="text-align:center;padding:20px 16px"><div style="font-size:10px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">P3 解鎖預估</div><div style="font-size:28px;font-weight:900;color:#FFD60A">+4 月</div><div style="font-size:11px;color:var(--wr-text3);margin-top:2px">依當前成長速率</div></div>
+      <div class="wr-panel" style="text-align:center;padding:20px 16px"><div style="font-size:10px;font-weight:800;color:var(--wr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">合作商家</div><div style="font-size:42px;font-weight:900;color:#2176DB">23</div><div style="font-size:11px;color:var(--wr-text3);margin-top:2px">目標 50 家</div></div>
+    </div>
+  </div><!-- /wr-view-phase -->
+
+  <!-- Coming soon views -->
+  <div class="wr-view" id="wr-view-cabin"><div class="wr-coming-soon">
+    <div class="wr-cs-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 4v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+    <div class="wr-cs-title">車廂擁擠度</div>
+    <div class="wr-cs-sub">即將推出 · 即時顯示各線路列車車廂擁擠指數，支援預測與分流建議</div>
+  </div></div>
+  <div class="wr-view" id="wr-view-platform"><div class="wr-coming-soon">
+    <div class="wr-cs-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="wr-cs-title">月台擁擠度</div>
+    <div class="wr-cs-sub">即將推出 · 各站月台即時人流熱圖，結合 Agent 離峰導流任務觸發閾值設定</div>
+  </div></div>
+  <div class="wr-view" id="wr-view-dispatch"><div class="wr-coming-soon">
+    <div class="wr-cs-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div class="wr-cs-title">發車監測</div>
+    <div class="wr-cs-sub">即將推出 · 全線發車準點率監控，誤點事件自動觸發 Agent 推播補償任務</div>
+  </div></div>
+  <div class="wr-view" id="wr-view-reports"><div class="wr-coming-soon">
+    <div class="wr-cs-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+    <div class="wr-cs-title">報表匯出</div>
+    <div class="wr-cs-sub">即將推出 · 支援 Excel / PDF 格式匯出，可自訂時間區間與指標組合</div>
+  </div></div>
+  <div class="wr-view" id="wr-view-settings"><div class="wr-coming-soon">
+    <div class="wr-cs-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div class="wr-cs-title">系統設定</div>
+    <div class="wr-cs-sub">即將推出 · 帳號權限管理、通知規則設定、資料串接與 API 金鑰管理</div>
+  </div></div>
+
+  </div><!-- /wr-main -->
+</div><!-- /tab-warroom -->
+
+<script>
+/* ── War Room: station data ── */
+const WR_STATIONS = {
+  '忠孝復興':{tasks:[
+    {r:1,name:'早餐任務 × 全家',type:'tc',lbl:'消費',n:4821,acc:68,conv:41},
+    {r:2,name:'午餐優惠 × 頂呱呱',type:'tc',lbl:'消費',n:2304,acc:61,conv:35},
+    {r:3,name:'離峰補貼 11-14時',type:'to',lbl:'離峰',n:1890,acc:72,conv:44},
+    {r:4,name:'信義商圈跨店兌換',type:'tx',lbl:'跨商家',n:1203,acc:55,conv:38},
+  ],w:52,s:28,t:20},
+  '101/世貿':{tasks:[
+    {r:1,name:'跨店兌換 × 101商場',type:'tx',lbl:'跨商家',n:3204,acc:73,conv:48},
+    {r:2,name:'觀光套票組合',type:'tc',lbl:'消費',n:1802,acc:65,conv:42},
+    {r:3,name:'離峰夜間優惠',type:'to',lbl:'離峰',n:892,acc:58,conv:31},
+  ],w:28,s:18,t:54},
+  '西門':{tasks:[
+    {r:1,name:'離峰購物導流',type:'to',lbl:'離峰',n:2891,acc:64,conv:37},
+    {r:2,name:'電影院跨商兌換',type:'tx',lbl:'跨商家',n:1654,acc:70,conv:43},
+    {r:3,name:'街頭小食任務',type:'tc',lbl:'消費',n:1203,acc:59,conv:28},
+  ],w:31,s:45,t:24},
+  '大安森林':{tasks:[
+    {r:1,name:'公園周邊早餐',type:'to',lbl:'離峰',n:2103,acc:69,conv:40},
+    {r:2,name:'咖啡廳跨商兌換',type:'tx',lbl:'跨商家',n:980,acc:62,conv:35},
+  ],w:44,s:35,t:21},
+  '信義安和':{tasks:[
+    {r:1,name:'南村落周邊美食',type:'tc',lbl:'消費',n:1892,acc:66,conv:39},
+    {r:2,name:'離峰通勤補貼',type:'to',lbl:'離峰',n:743,acc:55,conv:30},
+  ],w:58,s:28,t:14},
+  '中山':{tasks:[
+    {r:1,name:'赤峰街跨店任務',type:'tx',lbl:'跨商家',n:1654,acc:71,conv:45},
+    {r:2,name:'誠品書店聯合任務',type:'tc',lbl:'消費',n:1102,acc:68,conv:40},
+  ],w:35,s:38,t:27},
+  '松山機場':{tasks:[
+    {r:1,name:'機場旅客歡迎組合',type:'tc',lbl:'消費',n:1210,acc:80,conv:55},
+    {r:2,name:'觀光路線推薦',type:'tx',lbl:'跨商家',n:654,acc:74,conv:48},
+  ],w:15,s:8,t:77},
+  '南港展覽':{tasks:[
+    {r:1,name:'展覽會場離峰票',type:'to',lbl:'離峰',n:980,acc:58,conv:32},
+    {r:2,name:'南港商圈消費任務',type:'tc',lbl:'消費',n:421,acc:51,conv:26},
+  ],w:55,s:22,t:23},
+};
+
+function wrRenderDecisions(station){
+  const d = WR_STATIONS[station]; if(!d) return;
+  document.getElementById('wr-decisions-title').textContent = 'Agent 決策摘要 · ' + station;
+  document.getElementById('wr-tbody').innerHTML = d.tasks.map(t=>`
+    <tr>
+      <td><span class="wr-rank r${t.r}">${t.r}</span><span class="wr-tname">${t.name}</span><span class="wr-ttype ${t.type}">${t.lbl}</span></td>
+      <td class="wr-numcol">${t.n.toLocaleString()}</td>
+      <td><div class="wr-pctcol ${t.acc>=70?'wr-pct-hi':t.acc>=60?'wr-pct-md':'wr-pct-lo'}">${t.acc}%</div><div class="wr-rbar"><div class="wr-rbar-fill" style="width:${t.acc}%;background:${t.acc>=70?'#34C759':'#00A6A6'}"></div></div></td>
+      <td><div class="wr-pctcol ${t.conv>=40?'wr-pct-hi':t.conv>=30?'wr-pct-md':'wr-pct-lo'}">${t.conv}%</div><div class="wr-rbar"><div class="wr-rbar-fill" style="width:${t.conv*2}%;background:#FFD60A"></div></div></td>
+    </tr>`).join('');
+  document.getElementById('wr-pw').style.width=d.w+'%';
+  document.getElementById('wr-ps').style.width=d.s+'%';
+  document.getElementById('wr-pt').style.width=d.t+'%';
+  document.getElementById('wr-plabels').innerHTML=`
+    <div class="wr-plbl"><div class="wr-pdot" style="background:#005BAC"></div>上班族 ${d.w}%</div>
+    <div class="wr-plbl"><div class="wr-pdot" style="background:#00A6A6"></div>學生族 ${d.s}%</div>
+    <div class="wr-plbl"><div class="wr-pdot" style="background:#FFD60A"></div>觀光客 ${d.t}%</div>`;
+}
+wrRenderDecisions('忠孝復興');
+
+function wrSelectStation(el,name){
+  document.querySelectorAll('.wr-sitem').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('wr-map-label').textContent=name;
+  wrRenderDecisions(name);
+}
+function wrFilter(btn,type){
+  document.querySelectorAll('.wr-fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.wr-sitem').forEach(item=>{
+    item.style.opacity=(type==='all'||item.dataset.task===type)?'1':'0.3';
+  });
+}
+function wrDismissAlert(){
+  const el=document.getElementById('wr-alert');
+  el.style.transition='all .3s';el.style.opacity='0';el.style.height='0';el.style.padding='0';el.style.marginBottom='0';
+  setTimeout(()=>el.remove(),300);
+}
+
+/* ── War Room: sidebar view switching ── */
+function wrSwitchView(id, navEl) {
+  document.querySelectorAll('.wr-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.wr-nav-item').forEach(n => n.classList.remove('active'));
+  const view = document.getElementById('wr-view-' + id);
+  if (view) view.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  if (id === 'weekly') wrBuildWeeklyMap();
+  // scroll main area to top
+  const main = document.querySelector('.wr-main');
+  if (main) main.scrollTop = 0;
+}
+
+/* ── War Room: bell notification ── */
+let wrBellOpen = false;
+let wrBellAutoShown = false;
+
+function wrToggleBell(){
+  wrBellOpen ? wrCloseBell() : wrOpenBell();
+}
+function wrOpenBell(){
+  wrBellOpen = true;
+  const p = document.getElementById('wr-notif-panel');
+  const bd = document.getElementById('wr-blur-backdrop');
+  p.style.opacity = '1'; p.style.pointerEvents = 'auto'; p.style.transform = 'translateY(0)';
+  if(bd) bd.classList.add('show');
+}
+function wrCloseBell(){
+  wrBellOpen = false;
+  const p = document.getElementById('wr-notif-panel');
+  const bd = document.getElementById('wr-blur-backdrop');
+  p.style.opacity = '0'; p.style.pointerEvents = 'none'; p.style.transform = 'translateY(-8px)';
+  if(bd) bd.classList.remove('show');
+}
+// Close when clicking outside
+document.addEventListener('click', e => {
+  const btn = document.getElementById('wr-bell-btn');
+  const panel = document.getElementById('wr-notif-panel');
+  if (wrBellOpen && btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) wrCloseBell();
+});
+function wrMarkAllRead(){
+  document.querySelectorAll('.wr-notif-item').forEach(el => el.classList.add('read'));
+  document.getElementById('wr-bell-badge').style.display = 'none';
+  document.querySelector('#wr-notif-panel > div:last-child span').textContent = '沒有未讀通知';
+}
+
+/* ── War Room: weekly segment map ── */
+const WR_SEGS = [
+  {label:'通勤旅客', color:'#4A9EFF'},
+  {label:'休閒購物', color:'#FF9F0A'},
+  {label:'商務出行', color:'#BF5AF2'},
+  {label:'觀光旅客', color:'#30D158'},
+  {label:'學生族群', color:'#00C8C8'},
+];
+// x/y as % of map container, segs must sum to 100
+const WR_WEEKLY_PINS = [
+  {id:'taipei-main',   name:'台北車站',   x:38.0, y:44.0, segs:[42,15,16,18,9]},
+  {id:'ximen',         name:'西門',       x:33.5, y:50.0, segs:[28,32,8,24,8]},
+  {id:'zhongshan',     name:'中山',       x:41.0, y:36.0, segs:[30,25,20,12,13]},
+  {id:'zxf',           name:'忠孝復興',   x:50.5, y:44.0, segs:[32,28,22,8,10]},
+  {id:'zxd',           name:'忠孝敦化',   x:57.0, y:44.0, segs:[25,35,24,6,10]},
+  {id:'nangang',       name:'南港',       x:69.5, y:44.0, segs:[38,10,36,4,12]},
+  {id:'songshan',      name:'松山',       x:61.5, y:36.5, segs:[35,18,32,5,10]},
+  {id:'daan',          name:'大安',       x:53.5, y:54.0, segs:[30,20,28,2,20]},
+  {id:'banqiao',       name:'板橋',       x:22.5, y:57.0, segs:[45,18,22,3,12]},
+  {id:'xinzhuang',     name:'新莊',       x:13.5, y:46.5, segs:[48,12,16,4,20]},
+  {id:'xindian',       name:'新店',       x:47.5, y:79.0, segs:[44,14,8,2,32]},
+  {id:'tamsui',        name:'淡水',       x:32.0, y:8.0,  segs:[25,38,6,26,5]},
+  {id:'zhongzheng',    name:'中正紀念堂', x:38.5, y:53.0, segs:[22,30,10,30,8]},
+  {id:'nanjing-fuxing',name:'南京復興',   x:50.5, y:36.0, segs:[35,20,30,5,10]},
+];
+function wrDonutSVG(segs, size) {
+  const r = 15.915; // circumference ≈ 100
+  const c = size / 2;
+  let acc = 0, arcs = '';
+  segs.forEach((p, i) => {
+    if (p > 0) {
+      arcs += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${WR_SEGS[i].color}" stroke-width="6.5" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${c} ${c})" stroke-linecap="butt"/>`;
+      acc += p;
+    }
+  });
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.8))">
+    <circle cx="${c}" cy="${c}" r="${r+3.5}" fill="rgba(255,255,255,.92)" stroke="rgba(0,0,0,.12)" stroke-width="0.6"/>
+    ${arcs}
+  </svg>`;
+}
+/* ── Map pan/zoom ── */
+let _wrScale=1, _wrTx=0, _wrTy=0, _wrDrag=false, _wrDragX=0, _wrDragY=0;
+function _wrApplyTransform(){
+  const inner=document.getElementById('wr-map-inner');
+  if(inner) inner.style.transform=`translate(${_wrTx}px,${_wrTy}px) scale(${_wrScale})`;
+}
+function wrMapZoom(factor,cx,cy){
+  const outer=document.getElementById('wr-map-outer');
+  if(!outer)return;
+  const r=outer.getBoundingClientRect();
+  const mx=(cx!=null?cx:r.width/2), my=(cy!=null?cy:r.height/2);
+  const ns=Math.max(0.4,Math.min(8,_wrScale*factor));
+  _wrTx=mx-(_wrScale>0?(mx-_wrTx)*(ns/_wrScale):mx);
+  _wrTy=my-(_wrScale>0?(my-_wrTy)*(ns/_wrScale):my);
+  _wrScale=ns; _wrApplyTransform();
+}
+function wrMapReset(){ _wrScale=1;_wrTx=0;_wrTy=0;_wrApplyTransform(); }
+function wrInitMapPanZoom(){
+  const outer=document.getElementById('wr-map-outer');
+  if(!outer||outer.dataset.pz)return; outer.dataset.pz='1';
+  outer.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const r=outer.getBoundingClientRect();
+    wrMapZoom(e.deltaY<0?1.12:0.89, e.clientX-r.left, e.clientY-r.top);
+  },{passive:false});
+  outer.addEventListener('mousedown',e=>{ _wrDrag=true; _wrDragX=e.clientX-_wrTx; _wrDragY=e.clientY-_wrTy; outer.style.cursor='grabbing'; });
+  document.addEventListener('mousemove',e=>{ if(!_wrDrag)return; _wrTx=e.clientX-_wrDragX; _wrTy=e.clientY-_wrDragY; _wrApplyTransform(); });
+  document.addEventListener('mouseup',()=>{ _wrDrag=false; const outer=document.getElementById('wr-map-outer'); if(outer)outer.style.cursor='grab'; });
+  // touch support
+  let _lastDist=0,_lastMid={x:0,y:0};
+  outer.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){ _lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); _lastMid={x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2}; }
+    else if(e.touches.length===1){ _wrDrag=true; _wrDragX=e.touches[0].clientX-_wrTx; _wrDragY=e.touches[0].clientY-_wrTy; }
+  },{passive:true});
+  outer.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const r=outer.getBoundingClientRect();
+      wrMapZoom(d/_lastDist,((_lastMid.x+e.touches[0].clientX+e.touches[1].clientX)/3)-r.left,((_lastMid.y+e.touches[0].clientY+e.touches[1].clientY)/3)-r.top);
+      _lastDist=d;
+    } else if(e.touches.length===1&&_wrDrag){ _wrTx=e.touches[0].clientX-_wrDragX; _wrTy=e.touches[0].clientY-_wrDragY; _wrApplyTransform(); }
+  },{passive:true});
+  outer.addEventListener('touchend',()=>{ _wrDrag=false; });
+}
+
+function wrBuildWeeklyMap() {
+  // legend
+  const legend = document.getElementById('wr-seg-legend');
+  if (legend && !legend.dataset.built) {
+    legend.dataset.built = '1';
+    legend.innerHTML = WR_SEGS.map(s =>
+      `<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,.75);font-weight:700">
+        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.color}"></div>${s.label}
+      </div>`
+    ).join('');
+  }
+  wrInitMapPanZoom();
+  const container = document.getElementById('wr-station-pins');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+  container.innerHTML = WR_WEEKLY_PINS.map(st =>
+    `<div class="wr-station-pin" id="wr-pin-${st.id}" onclick="wrSelectStation('${st.id}')"
+       style="position:absolute;left:${st.x}%;top:${st.y}%;transform:translate(-50%,-50%);cursor:pointer;text-align:center;user-select:none">
+      ${wrDonutSVG(st.segs, 44)}
+      <div style="font-size:7.5px;color:#111;font-weight:900;margin-top:1px;white-space:nowrap;background:rgba(255,255,255,.85);padding:0 4px;border-radius:3px;letter-spacing:.2px">${st.name}</div>
+    </div>`
+  ).join('');
+}
+function wrSelectStation(id) {
+  const st = WR_WEEKLY_PINS.find(s => s.id === id);
+  if (!st) return;
+  document.querySelectorAll('.wr-station-pin').forEach(el => el.classList.remove('wr-pin-selected'));
+  const pin = document.getElementById('wr-pin-' + id);
+  if (pin) pin.classList.add('wr-pin-selected');
+  const detail = document.getElementById('wr-station-detail-inner');
+  if (!detail) return;
+  const domTop = st.segs.indexOf(Math.max(...st.segs));
+  detail.innerHTML = `
+    <div style="flex-shrink:0">${wrDonutSVG(st.segs, 68)}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:900;color:var(--wr-text);margin-bottom:8px">${st.name}
+        <span style="font-size:9px;font-weight:700;color:${WR_SEGS[domTop].color};margin-left:6px;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:10px">${WR_SEGS[domTop].label}主導</span>
+      </div>
+      ${WR_SEGS.map((seg, i) => {
+        const pct = st.segs[i];
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <div style="width:52px;font-size:9px;color:${seg.color};font-weight:700;flex-shrink:0">${seg.label}</div>
+          <div class="wr-seg-bar"><div class="wr-seg-fill" style="width:${pct}%;background:${seg.color}"></div></div>
+          <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,.65);width:24px;text-align:right;flex-shrink:0">${pct}%</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ── War Room: counters (fire when tab becomes visible) ── */
+function wrAnimateCounter(el,target,suffix,dur){
+  const start=performance.now();
+  const isF=target%1!==0;
+  function step(ts){
+    const p=Math.min((ts-start)/dur,1);
+    const e=1-Math.pow(1-p,3);
+    el.innerHTML=(isF?(target*e).toFixed(1):Math.round(target*e).toLocaleString())+suffix;
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+let wrCountersRan=false;
+const _wrTabBtn=document.querySelectorAll('.ntab')[2];
+_wrTabBtn&&_wrTabBtn.addEventListener('click',()=>{
+  // auto-open bell on first visit
+  if(!wrBellAutoShown){ wrBellAutoShown=true; setTimeout(wrOpenBell, 500); }
+  wrBuildWeeklyMap();
+  if(wrCountersRan)return; wrCountersRan=true;
+  setTimeout(()=>{
+    wrAnimateCounter(document.getElementById('wr-p1'),13210,'',1200);
+    wrAnimateCounter(document.getElementById('wr-p2'),68,'<span style="font-size:16px;opacity:.6">%</span>',1400);
+    wrAnimateCounter(document.getElementById('wr-p3'),3847,'',1600);
+    wrAnimateCounter(document.getElementById('wr-p4'),51,'<span style="font-size:16px;opacity:.6">%</span>',1800);
+  },200);
+  /* subtle live drift */
+  setInterval(()=>{
+    const el=document.getElementById('wr-p1');
+    if(!el||el.innerHTML.includes('<'))return;
+    const v=parseInt(el.textContent.replace(/,/g,''));
+    if(!isNaN(v))el.textContent=(v+Math.floor(Math.random()*4)+1).toLocaleString();
+  },4500);
+});
 </script>
 </body>
 </html>
